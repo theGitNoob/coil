@@ -5,7 +5,7 @@
 >
 > Build order and task breakdown: [`ROADMAP.md`](./ROADMAP.md) · Layering and performance rules: [`ARCHITECTURE.md`](./ARCHITECTURE.md) · Why each choice was made: [`DECISIONS.md`](./DECISIONS.md)
 >
-> **Stack:** Godot 4.5 (.NET) · C# simulation, GDScript presentation · landscape only · offline bots
+> **Stack:** Godot 4.7 (.NET) · C# simulation, GDScript presentation · landscape only · offline bots
 
 ---
 
@@ -330,7 +330,7 @@ Audio: one music bed (calm, ~90 BPM, loops), a duck to 40% during the death slow
 
 ## 11. Technical architecture
 
-**Engine:** Godot 4.5 (.NET), **Forward Mobile** renderer, **landscape only**.
+**Engine:** Godot 4.7 (.NET), **Forward Mobile** renderer, **landscape only**.
 
 **Language split** — simulation, bot agents and the bulk MultiMesh writers are **C#**; UI, menus, VFX orchestration and player input are **GDScript**. Bots are C# because they query the spatial hash five times per steer: written in GDScript they would cross the interop boundary ~40 times per tick and hand back everything C# bought.
 

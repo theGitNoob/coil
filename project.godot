@@ -8,7 +8,7 @@ config_version=5
 
 config/name="COIL"
 config/description="Snake-arena game. Offline-first, bots, landscape only."
-config/features=PackedStringArray("4.5", "C#", "Mobile")
+config/features=PackedStringArray("4.7", "C#", "Mobile")
 
 [display]
 

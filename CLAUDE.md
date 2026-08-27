@@ -1,6 +1,6 @@
 # COIL
 
-Snake-arena game for Android. Godot 4.5 (.NET), hybrid C# / GDScript, offline-first with bots.
+Snake-arena game for Android. Godot 4.7 (.NET), hybrid C# / GDScript, offline-first with bots.
 
 | Document | What it holds |
 |---|---|
