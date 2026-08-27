@@ -1,0 +1,32 @@
+# Normalise line endings so a Windows checkout does not churn every file.
+* text=auto eol=lf
+
+# Text formats, with the diff driver where one helps review.
+*.cs        text diff=csharp
+*.csproj    text
+*.sln       text
+*.props     text
+*.targets   text
+*.gd        text
+*.tres      text
+*.tscn      text
+*.godot     text
+*.cfg       text
+*.md        text
+*.yml       text
+*.sh        text eol=lf
+
+# Binary assets. Marked explicitly so git never tries to merge or eol-convert
+# them, and so diffs stay readable.
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.webp      binary
+*.svg       text
+*.ogg       binary
+*.wav       binary
+*.mp3       binary
+*.ttf       binary
+*.otf       binary
+*.res       binary
+*.ctex      binary
