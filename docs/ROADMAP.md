@@ -64,6 +64,7 @@ Mostly it can't, and that's by design — this is a sequential build for one per
 |---|---|---|---|---|
 | **M0-01** | Solution + Godot project | `Coil.sln`, `Coil.csproj`, `src/Coil.Sim`, `src/Coil.Agents`, `src/Coil.Presentation` | Godot 4.5 **.NET** project, Forward Mobile, landscape-sensor, 1280×720 `canvas_items` stretch. Four projects build. **Verify `Coil.Sim` (plain `net8.0`) can reference `GodotSharp` for `Vector2` alone** — if version pinning fights back, fall back to a hand-rolled `Vec2` now, not later. ARCH §2 | M |
 | **M0-02** | Git + GitHub + PR flow | `.gitignore`, `.gitattributes`, `.github/pull_request_template.md` | Repo initialised and pushed, `.godot/`, `bin/`, `obj/` and keystores ignored, PR template matches CONVENTIONS §5, `main` protected. | S |
+| **M0-20** | Engine bump to Godot 4.7.2 | `Coil.csproj`, `Coil.Presentation.csproj`, `Coil.Sim.csproj`, `project.godot`, docs | Inserted out of numeric order because it must land before `M0-03`. Supersedes the 4.5 pin accepted in `M0-01`. `Godot.NET.Sdk`, `GodotSharp` and `config/features` all track the installed engine, and a headless C# boot proves the compiled `GodotSharp` version equals the one loaded at runtime. D-01 | S |
 | **M0-03** | ⚠ **Android .NET export** | `export_presets.cfg`, `tools/deploy.sh` | One command builds, installs and launches an **arm64 .NET** build with filtered logcat. **This is the riskiest unknown in the stack — prove it before anything is built on it.** D-07 | M |
 | **M0-04** | Strict build settings | `Directory.Build.props`, `.editorconfig` | `Nullable`, `TreatWarningsAsErrors`, `EnforceCodeStyleInBuild`, analyzers on, shared across all projects. A deliberate warning fails the build. D-12 | S |
 | **M0-05** | xUnit harness | `tests/Coil.Sim.Tests/` | `dotnet test` runs with **no engine boot** and finishes under 10 s. One real test proves the wiring. | S |
@@ -82,7 +83,7 @@ Mostly it can't, and that's by design — this is a sequential build for one per
 | **M0-18** | Debug overlay | `ui/debug_overlay.gd` | Three-finger tap toggles fps, frame ms, tick ms, entity counts, allocation count. Stripped from release builds. | S |
 | **M0-19** | ⚠ **Perf spike** (throwaway) | `tools/spike_render.tscn` | 34 dummy snakes with synthetic paths, no AI, no collision, on the floor device. Result in `docs/PERF_LOG.md`. **If under 60 fps, stop and fix the render plan before M1.** | M |
 
-**M0 is now 19 tasks** — two more than the pre-stack version, and several reshaped, all of them one-time infrastructure that pays back from M1 onward. `M0-03` and `M0-09` are the two that must not be deferred: the first proves the stack is viable, the second makes the architecture self-enforcing.
+**M0 is now 20 tasks** — two more than the pre-stack version, and several reshaped, all of them one-time infrastructure that pays back from M1 onward. `M0-03` and `M0-09` are the two that must not be deferred: the first proves the stack is viable, the second makes the architecture self-enforcing.
 
 ---
 

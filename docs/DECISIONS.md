@@ -6,10 +6,11 @@ Every locked decision, why it was made, and what would make us revisit it. The s
 
 ---
 
-### D-01 · Godot 4.5 (.NET) as the engine
+### D-01 · Godot 4.7 (.NET) as the engine
 **Context.** Top-down 2D .io game, solo developer, Android target, no licensing budget.
 **Cost.** Smaller ecosystem than Unity; fewer answers when something breaks; .NET on Android is Godot's least-travelled export path.
-**Revisit if.** The .NET Android export proves unstable in `M0-03` — the fallback is GDScript-only, which changes D-07, not the engine.
+**Amended in `M0-20`.** Originally locked to 4.5. The engine packaged for the development machine is 4.7.2, and Godot substitutes its own `GodotSharp` at load time regardless of the pinned `PackageReference` — so a 4.5 pin against a 4.7 engine compiles clean and then diverges at runtime, invisibly, until code touches an API that moved. The pin now tracks the engine exactly.
+**Revisit if.** The .NET Android export proves unstable in `M0-03` — the fallback is GDScript-only, which changes D-07, not the engine. A future engine upgrade repeats `M0-20`: bump the three pins and `config/features` together, never one without the others.
 
 ### D-02 · Offline bots first, online later
 **Context.** Wanted a playable game without server infrastructure or hosting costs, and offline is a genuine mobile advantage.
