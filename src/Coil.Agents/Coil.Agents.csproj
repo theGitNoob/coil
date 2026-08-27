@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- net8.0, references Coil.Sim ONLY — ARCH §2. No Godot API of any kind. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Coil.Agents</RootNamespace>
+    <AssemblyName>Coil.Agents</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Coil.Sim/Coil.Sim.csproj" />
+  </ItemGroup>
+
+</Project>

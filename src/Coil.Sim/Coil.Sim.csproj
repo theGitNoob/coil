@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Plain net8.0, deliberately NOT a Godot SDK project — ARCH §2.
+    GodotSharp is here for Vector2/Mathf only: pure managed value types that
+    need no engine, so `dotnet test` boots no window. Anything in GodotSharp
+    that calls into native code is banned by the architecture tests (M0-09).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Coil.Sim</RootNamespace>
+    <AssemblyName>Coil.Sim</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GodotSharp" Version="4.5.2" />
+  </ItemGroup>
+
+</Project>

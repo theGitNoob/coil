@@ -1,0 +1,19 @@
+<Project Sdk="Godot.NET.Sdk/4.5.2">
+
+  <!--
+    The only library that gets the full Godot API — ARCH §2. It holds the tick
+    host and the MultiMesh writers, which read simulation arrays directly so
+    bulk data never crosses the C#/GDScript boundary (ARCH §3).
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Coil.Presentation</RootNamespace>
+    <AssemblyName>Coil.Presentation</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Coil.Sim/Coil.Sim.csproj" />
+    <ProjectReference Include="../Coil.Agents/Coil.Agents.csproj" />
+  </ItemGroup>
+
+</Project>

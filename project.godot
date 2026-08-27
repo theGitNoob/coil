@@ -1,0 +1,34 @@
+; Engine configuration file.
+; Hand-authored for M0-01. Godot rewrites this file when the editor saves, so
+; keep changes here small and check the diff — spec §11, ARCH §2.
+
+config_version=5
+
+[application]
+
+config/name="COIL"
+config/description="Snake-arena game. Offline-first, bots, landscape only."
+config/features=PackedStringArray("4.5", "C#", "Mobile")
+
+[display]
+
+; 1280x720 design resolution with canvas_items stretch — the arena is authored
+; at this size and scaled to whatever the handset reports. Roadmap M0-01.
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+; Landscape only — D-08. sensor_landscape so the phone may be held either way up.
+window/handheld/orientation="sensor_landscape"
+
+[dotnet]
+
+project/assembly_name="Coil"
+
+[rendering]
+
+; Forward Mobile — spec §11. The desktop editor falls back to the same method so
+; what is seen in the editor is what the handset renders.
+renderer/rendering_method="mobile"
+renderer/rendering_method.mobile="mobile"
