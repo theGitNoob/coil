@@ -1,0 +1,6 @@
+{
+  "//": "The .NET 10 SDK routes `dotnet test` through VSTest unless a project opts in here. xunit.v3 is a Microsoft.Testing.Platform runner, so this is what keeps the command CLAUDE.md documents — plain `dotnet test` — working, and what lets the suite run as a native executable with no VSTest host to start.",
+  "test": {
+    "runner": "Microsoft.Testing.Platform"
+  }
+}

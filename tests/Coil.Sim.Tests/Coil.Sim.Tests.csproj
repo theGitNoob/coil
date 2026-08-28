@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The simulation's test project — CONVENTIONS §3, D-11.
+
+    Plain net8.0 and a reference to Coil.Sim only. It deliberately does NOT use
+    Godot.NET.Sdk: `dotnet test` must boot no engine and open no window, which
+    is what keeps the suite fast enough to run on every commit. M0-09 adds the
+    NetArchTest rules to this same project.
+
+    xunit.v3 runs on Microsoft.Testing.Platform, so the test assembly is its own
+    executable and `dotnet test` needs no VSTest host to start. The opt-in that
+    makes `dotnet test` use it lives in global.json — on the .NET 10 SDK the old
+    per-project TestingPlatformDotnetTestSupport bridge is an error, not a route.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Coil.Sim.Tests</RootNamespace>
+    <AssemblyName>Coil.Sim.Tests</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Coil.Sim/Coil.Sim.csproj" />
+  </ItemGroup>
+
+</Project>
