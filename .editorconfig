@@ -124,3 +124,9 @@ dotnet_diagnostic.CA1852.severity = warning
 [*.{g,i,designer,generated}.cs]
 generated_code = true
 dotnet_analyzer_diagnostic.severity = none
+
+# Test method names are Method_Scenario_ExpectedResult (CONVENTIONS §3), which
+# is exactly the shape CA1707 forbids. The naming convention is deliberate and
+# load-bearing for readability, so it wins inside tests/ — and only there.
+[tests/**/*.cs]
+dotnet_diagnostic.CA1707.severity = none
