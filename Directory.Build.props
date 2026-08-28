@@ -1,0 +1,21 @@
+<Project>
+
+  <!--
+    Inherited by every project in the repo — CONVENTIONS §1, D-12.
+
+    The Coil.Sim purity rule is the load-bearing architectural constraint, and
+    a rule enforced only by review is a rule that expires. Warnings are errors
+    so the compiler owns the architecture instead of the reviewer.
+
+    A genuinely-wrong warning is suppressed at the line with a comment giving
+    the reason — never project-wide, and never here.
+  -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+</Project>
