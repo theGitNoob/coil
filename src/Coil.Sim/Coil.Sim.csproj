@@ -16,4 +16,12 @@
     <PackageReference Include="GodotSharp" Version="4.7.2" />
   </ItemGroup>
 
+  <!--
+    The simulation's types are internal until something outside needs them.
+    The test project is that something — CONVENTIONS §3.
+  -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Coil.Sim.Tests" />
+  </ItemGroup>
+
 </Project>
