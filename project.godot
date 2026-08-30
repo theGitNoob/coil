@@ -10,6 +10,10 @@ config/name="COIL"
 config/description="Snake-arena game. Offline-first, bots, landscape only."
 config/features=PackedStringArray("4.7", "C#", "Mobile")
 
+; M0-03 needs a scene to launch into to prove .NET runs on the handset at all.
+; Throwaway — M0-12 repoints this at the real arena host.
+run/main_scene="res://game/boot.tscn"
+
 [display]
 
 ; 1280x720 design resolution with canvas_items stretch — the arena is authored
@@ -32,3 +36,8 @@ project/assembly_name="Coil"
 ; what is seen in the editor is what the handset renders.
 renderer/rendering_method="mobile"
 renderer/rendering_method.mobile="mobile"
+
+; Required by the Android exporter, which refuses to package without it — the
+; handset's GPU decodes ETC2/ASTC, and an APK of raw textures would not fit the
+; budget in spec §11 anyway. Roadmap M0-03.
+textures/vram_compression/import_etc2_astc=true

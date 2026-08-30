@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/BootProbe.cs" id="1_boot"]
+
+[node name="Boot" type="Node2D"]
+script = ExtResource("1_boot")
+
+[node name="Readout" type="Label" parent="."]
+unique_name_in_owner = true
+offset_left = 48.0
+offset_top = 48.0
+offset_right = 1232.0
+offset_bottom = 672.0
+theme_override_colors/font_color = Color(0.85, 0.94, 0.9, 1)
+theme_override_font_sizes/font_size = 36
+text = "booting…"
