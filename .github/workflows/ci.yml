@@ -1,0 +1,72 @@
+name: CI
+
+# Build and test on every PR — D-16. The sim tests boot no engine, so the whole
+# run is fast enough to block a merge on.
+#
+# Godot export is deliberately NOT here. Export templates make it slow, and the
+# device build in the definition of done (CONVENTIONS §6.1) is what actually
+# proves the APK — CI cannot, and does not try to.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A PR that gets a second push has no use for the first push's result.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build-test:
+    name: build + test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Both SDKs are load-bearing:
+      #   10.0.x — global.json's `test.runner` opt-in is a .NET 10 SDK feature,
+      #            and it is what routes `dotnet test` to xunit.v3's
+      #            Microsoft.Testing.Platform runner. global.json pins no SDK,
+      #            so the CLI resolves to the highest installed.
+      #    8.0.x — every project targets net8.0 and the test project is an Exe;
+      #            executing it needs the 8.0 runtime, which the 10 SDK does not
+      #            carry. Do not "fix" a runtime error here by bumping a
+      #            TargetFramework: the Android export template requires net9.0
+      #            on the prebuilt path and the gradle build is what skips that
+      #            check (M0-03).
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      # Printed, not assumed — SDK resolution is the one thing here most likely
+      # to drift, and a failing run should say so on its own.
+      - name: Toolchain
+        run: dotnet --version && dotnet --list-sdks
+
+      - name: Restore
+        run: dotnet restore
+
+      # No engine on the runner and none needed: Coil.Sim takes GodotSharp from
+      # NuGet and the two Godot.NET.Sdk projects restore and build against the
+      # SDK package alone — ARCH §2. Default configuration, matching
+      # tools/deploy.sh. Warnings are errors via Directory.Build.props, so this
+      # step is also the style gate.
+      - name: Build
+        run: dotnet build --no-restore
+
+      # Plain `dotnet test`. NEVER add --nologo — the SDK forwards it to the
+      # xunit.v3 MTP server, which reports "Zero tests ran" (exit 5) rather than
+      # rejecting the flag, turning a green run into a lie.
+      #
+      # The architecture rules (M0-09) land in this same test project, so this
+      # same command starts enforcing them with no change to this file —
+      # CONVENTIONS §6.3.
+      - name: Test
+        run: dotnet test --no-build
