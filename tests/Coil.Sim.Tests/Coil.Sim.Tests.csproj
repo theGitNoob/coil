@@ -29,4 +29,13 @@
     <ProjectReference Include="../../src/Coil.Sim/Coil.Sim.csproj" />
   </ItemGroup>
 
+  <!--
+    The balance resource is the presentation layer's file, but its contents are
+    a simulation contract: SimConfigTests reads it as text to prove every
+    Appendix A constant is present, without booting an engine to deserialise it.
+  -->
+  <ItemGroup>
+    <None Include="../../data/balance.tres" Link="balance.tres" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

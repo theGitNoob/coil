@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="BalanceData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/BalanceData.cs" id="1_balance"]
+
+[resource]
+script = ExtResource("1_balance")
+SpeedBase = 220.0
+SpeedBoost = 380.0
+OmegaNumerator = 900.0
+OmegaMin = 2.0
+OmegaMax = 4.5
+PathStep = 6.0
+MassStart = 10.0
+RadiusBase = 14.0
+RadiusExp = 0.25
+RadiusMax = 46.0
+LengthBase = 60.0
+LengthPerMass = 1.6
+BoostDrain = 9.0
+BoostDropInterval = 0.35
+BoostDropMass = 4.0
+BoostMinMass = 25.0
+PelletMass = 1.0
+CorpseChunkMass = 6.0
+CorpseReturnRatio = 0.7
+BountyReturnRatio = 1.0
+MagnetBase = 45.0
+MagnetPerRadius = 1.5
+LeaderDecayRate = 0.004
+LeaderDecayThreshold = 500.0
+ArenaRadius = 3500.0
+BorderWarnRadius = 3350.0
+SnakeCount = 34
+PelletTarget = 2600
+CellSize = 96.0
+GraceDuration = 2.0
+TickRate = 60
+MaxCatchupTicks = 5
+BotSteerInterval = 4
+BotSteerIntervalCulled = 12
+BotPerceptionRadius = 1400.0
