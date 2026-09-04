@@ -50,11 +50,21 @@ public sealed class SimConfig
     /// <summary>Upper clamp on radius, u.</summary>
     public required float RadiusMax { get; init; }
 
+    /// <summary>Divisor in the radius curve: radius = base * (1 + mass/this)^exp.</summary>
+    public required float RadiusMassDivisor { get; init; }
+
     /// <summary>Body length at zero mass, u.</summary>
     public required float LengthBase { get; init; }
 
     /// <summary>Body length gained per unit of mass, u.</summary>
     public required float LengthPerMass { get; init; }
+
+    /// <summary>
+    /// The mass the path ring is sized for (§4.1: "sized to max_mass and never
+    /// reallocated mid-match"). A snake past this keeps growing longer but its
+    /// body is truncated at the ring capacity rather than reallocating.
+    /// </summary>
+    public required float MaxMass { get; init; }
 
     // --- Economy (§4.3) ----------------------------------------------------
 

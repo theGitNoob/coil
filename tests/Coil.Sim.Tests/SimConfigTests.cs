@@ -40,8 +40,10 @@ public sealed class SimConfigTests
         ("RadiusBase", 14.0),
         ("RadiusExp", 0.25),
         ("RadiusMax", 46.0),
+        ("RadiusMassDivisor", 100.0),
         ("LengthBase", 60.0),
         ("LengthPerMass", 1.6),
+        ("MaxMass", 2000.0),
 
         // Economy
         ("BoostDrain", 9.0),
@@ -96,6 +98,24 @@ public sealed class SimConfigTests
             Assert.Contains(
                 typeof(IsExternalInit),
                 setter.ReturnParameter.GetRequiredCustomModifiers());
+        }
+    }
+
+    /// <summary>
+    /// SpecConfig is a second copy of Appendix A, kept for tests that need a
+    /// world. This is what stops the two drifting apart in silence.
+    /// </summary>
+    [Fact]
+    public void SpecConfig_Matches_AppendixA()
+    {
+        SimConfig config = SpecConfig.Create();
+
+        foreach ((string name, double expected) in AppendixA)
+        {
+            PropertyInfo property = Assert.Single(ConfigProperties, p => p.Name == name);
+            double actual = Convert.ToDouble(property.GetValue(config), CultureInfo.InvariantCulture);
+
+            Assert.Equal(expected, actual, precision: 6);
         }
     }
 
