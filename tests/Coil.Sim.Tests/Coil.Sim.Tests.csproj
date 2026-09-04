@@ -48,6 +48,7 @@
   -->
   <ItemGroup>
     <None Include="../../data/balance.tres" Link="balance.tres" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../project.godot" Link="project.godot" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
