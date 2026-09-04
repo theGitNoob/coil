@@ -58,7 +58,7 @@ Mostly it can't, and that's by design — this is a sequential build for one per
 ## M0 · Skeleton
 
 **Phase gate:** you can steer a snake on your phone and the body follows correctly at any speed.
-**19 tasks.** This phase builds the machine that all later phases run on. It is the phase most worth being slow and careful in.
+**21 tasks.** This phase builds the machine that all later phases run on. It is the phase most worth being slow and careful in.
 
 | ID | Task | Files | Done when | Sz |
 |---|---|---|---|---|
@@ -81,9 +81,10 @@ Mostly it can't, and that's by design — this is a sequential build for one per
 | **M0-16** | Floating joystick | `ui/joystick.gd` | Anchors on touch anywhere in the left 45%, 0.15 dead zone, 1.4× drag-out, fades on release, tracks its own touch index. §3 | M |
 | **M0-17** | Player agent + boundary | `ui/player_agent.gd`, `ArenaHost.cs` | Joystick → `InputCommand`, **one crossing per tick** (ARCH §3). Finger-follow alternative behind a `control_scheme` setting. D-04 | M |
 | **M0-18** | Debug overlay | `ui/debug_overlay.gd` | Three-finger tap toggles fps, frame ms, tick ms, entity counts, allocation count. Stripped from release builds. | S |
+| **M0-21** | Export excludes build output | `export_presets.cfg` | Inserted out of numeric order because it fixes a defect shipped by `M0-07`. `export_filter="all_resources"` packs every resource under `res://`, including the copy of `balance.tres` that the test project writes to its build output. The exported APK contains no resource from `tests/`, `bin/` or `obj/`, verified by inspecting the APK. | S |
 | **M0-19** | ⚠ **Perf spike** (throwaway) | `tools/spike_render.tscn` | 34 dummy snakes with synthetic paths, no AI, no collision, on the floor device. Result in `docs/PERF_LOG.md`. **If under 60 fps, stop and fix the render plan before M1.** | M |
 
-**M0 is now 20 tasks** — two more than the pre-stack version, and several reshaped, all of them one-time infrastructure that pays back from M1 onward. `M0-03` and `M0-09` are the two that must not be deferred: the first proves the stack is viable, the second makes the architecture self-enforcing.
+**M0 is now 21 tasks** — two more than the pre-stack version, and several reshaped, all of them one-time infrastructure that pays back from M1 onward. `M0-03` and `M0-09` are the two that must not be deferred: the first proves the stack is viable, the second makes the architecture self-enforcing.
 
 ---
 
