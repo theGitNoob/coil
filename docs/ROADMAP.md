@@ -58,7 +58,7 @@ Mostly it can't, and that's by design — this is a sequential build for one per
 ## M0 · Skeleton
 
 **Phase gate:** you can steer a snake on your phone and the body follows correctly at any speed.
-**21 tasks.** This phase builds the machine that all later phases run on. It is the phase most worth being slow and careful in.
+**22 tasks.** This phase builds the machine that all later phases run on. It is the phase most worth being slow and careful in.
 
 | ID | Task | Files | Done when | Sz |
 |---|---|---|---|---|
@@ -74,6 +74,7 @@ Mostly it can't, and that's by design — this is a sequential build for one per
 | **M0-09** | ⚠ **Architecture tests** | `tests/Coil.Sim.Tests/ArchitectureTests.cs` | NetArchTest enforces every rule in ARCH §9. Each fails against a deliberately planted violation. **The layer rule stops being a convention and becomes a build failure.** | M |
 | **M0-10** | Snake path buffer | `src/Coil.Sim/Snake.cs` | Ring buffer resampled to `PathStep` with boundary interpolation. Test-first: spacing holds to ±0.01 u across jittered `dt` and speed changes. §4.1 | M |
 | **M0-11** | `World.Tick` | `src/Coil.Sim/World.cs` | `Tick(float dt, ReadOnlySpan<InputCommand>)` advances all snakes. SoA state, preallocated, zero allocation. §4.2, ARCH §4 | M |
+| **M0-22** | Engine shells decision | `docs/DECISIONS.md`, `docs/ARCHITECTURE.md` | Inserted out of numeric order because it must land before `M0-12`. Godot registers C# script types only from the main project assembly, so ARCH §2 as written is not implementable for `ArenaHost`, `SnakeRenderer`, M0-14 and M0-18. D-18 records the shell pattern and ARCH §2/§4 reflect it. | S |
 | **M0-12** | Arena host + fixed tick | `src/Coil.Presentation/ArenaHost.cs` | 60 Hz physics tick, max 5 catch-up ticks, interpolation fraction exposed. A 200 ms stall does not spiral. §11.2 | M |
 | **M0-13** | Snake renderer | `src/Coil.Presentation/SnakeRenderer.cs` | One `MultiMeshInstance2D` per snake, transforms written in bulk **from C#** with no marshalling. Head is a separate sprite. Zero per-segment nodes. §11.4 | M |
 | **M0-14** | Render interpolation | `ArenaHost.cs`, renderer | Previous/current snapshots lerped each frame. Visibly smooth at 120 Hz, still correct capped to 30. §11.2 | M |
@@ -84,7 +85,7 @@ Mostly it can't, and that's by design — this is a sequential build for one per
 | **M0-21** | Export excludes build output | `export_presets.cfg` | Inserted out of numeric order because it fixes a defect shipped by `M0-07`. `export_filter="all_resources"` packs every resource under `res://`, including the copy of `balance.tres` that the test project writes to its build output. The exported APK contains no resource from `tests/`, `bin/` or `obj/`, verified by inspecting the APK. | S |
 | **M0-19** | ⚠ **Perf spike** (throwaway) | `tools/spike_render.tscn` | 34 dummy snakes with synthetic paths, no AI, no collision, on the floor device. Result in `docs/PERF_LOG.md`. **If under 60 fps, stop and fix the render plan before M1.** | M |
 
-**M0 is now 21 tasks** — two more than the pre-stack version, and several reshaped, all of them one-time infrastructure that pays back from M1 onward. `M0-03` and `M0-09` are the two that must not be deferred: the first proves the stack is viable, the second makes the architecture self-enforcing.
+**M0 is now 22 tasks** — two more than the pre-stack version, and several reshaped, all of them one-time infrastructure that pays back from M1 onward. `M0-03` and `M0-09` are the two that must not be deferred: the first proves the stack is viable, the second makes the architecture self-enforcing.
 
 ---
 
