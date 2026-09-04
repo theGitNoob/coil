@@ -498,8 +498,10 @@ MASS_START             10.0
 RADIUS_BASE            14.0
 RADIUS_EXP              0.25
 RADIUS_MAX             46.0
+RADIUS_MASS_DIVISOR   100.0   -> radius = clamp(14*(1 + mass/100)^0.25, 14, 46)
 LENGTH_BASE            60.0
 LENGTH_PER_MASS         1.6
+MAX_MASS             2000.0   sizes the path ring; §4.1
 
 # Economy
 BOOST_DRAIN             9.0   mass/s

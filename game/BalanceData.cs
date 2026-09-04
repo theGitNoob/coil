@@ -32,8 +32,10 @@ public partial class BalanceData : Resource
     [Export] public float RadiusBase { get; set; } = 14.0f;
     [Export] public float RadiusExp { get; set; } = 0.25f;
     [Export] public float RadiusMax { get; set; } = 46.0f;
+    [Export] public float RadiusMassDivisor { get; set; } = 100.0f;
     [Export] public float LengthBase { get; set; } = 60.0f;
     [Export] public float LengthPerMass { get; set; } = 1.6f;
+    [Export] public float MaxMass { get; set; } = 2000.0f;
 
     // --- Economy (§4.3) ----------------------------------------------------
     [Export] public float BoostDrain { get; set; } = 9.0f;
@@ -82,8 +84,10 @@ public partial class BalanceData : Resource
         RadiusBase = RadiusBase,
         RadiusExp = RadiusExp,
         RadiusMax = RadiusMax,
+        RadiusMassDivisor = RadiusMassDivisor,
         LengthBase = LengthBase,
         LengthPerMass = LengthPerMass,
+        MaxMass = MaxMass,
 
         BoostDrain = BoostDrain,
         BoostDropInterval = BoostDropInterval,
