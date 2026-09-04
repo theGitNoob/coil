@@ -11,6 +11,7 @@ Budget: **6 ms per tick**, 60 Hz, 34 snakes (CLAUDE.md, §11.5).
 |---|---|---|---|
 | M0-03 | .NET build boots on the handset | .NET 8.0.30, Arm64, mobile renderer | SM-A155M, Android 36 |
 | M0-11 | `World.Tick`, movement only — 34 snakes, 200k ticks | **0.0066 ms/tick** (6.58 µs), 0 B allocated | Desktop, AMD Ryzen 7 7735HS with Radeon Graphics |
+| M0-12 | 200 ms stall recovery, catch-up cap | **5 ticks** in the recovery frame, no cascade | SM-A155M, Android 36 |
 
 ## M0-11 · `World.Tick` baseline
 
@@ -29,3 +30,27 @@ actually consume the budget. Read it as "the movement math is free", not as
 Not yet measured on the device: nothing calls `Tick` on the handset until
 `ArenaHost` lands in M0-12. **M0-19 is the gate-critical on-device spike** and
 is what decides whether the render plan survives.
+
+## M0-12 · `ArenaHost`, stall recovery
+
+The first task to run `World.Tick` on the handset. The cadence is the engine's
+physics loop, not our own accumulator: `project.godot` carries Appendix A's
+`TICK_RATE` and `MAX_CATCHUP_TICKS`, and `EngineTickSettingsTests` fails if the
+two drift apart — Godot defaults the cap to 8.
+
+Measured by inducing a real 200 ms block inside `_Process` (a temporary probe,
+removed before commit) and reading logcat on the device:
+
+```
+COIL stall probe: blocking 200 ms
+COIL catch-up: 5 ticks in one frame (84 ms), total 191
+COIL catch-up: 2 ticks in one frame (23 ms), total 193
+```
+
+A 200 ms stall owes 12 ticks at 60 Hz. The recovery frame ran **exactly 5** — the
+cap — and dropped the remaining 7 rather than carrying them. The frames after it
+are ordinary 2-tick frames on a phone occasionally taking 25 ms, not a cascade.
+Same behaviour headless on desktop.
+
+Still no rendering: one snake ticks and nothing is drawn until `SnakeRenderer`
+in M0-13. **M0-19 remains the gate-critical on-device verdict.**
