@@ -86,3 +86,16 @@ Every locked decision, why it was made, and what would make us revisit it. The s
 **Context.** A direct consequence of D-07. The .NET runtime adds roughly 20 MB that no amount of asset discipline recovers.
 **Cost.** A larger download. Mitigated by exporting **arm64-only** and enabling assembly trimming in `M5-10`.
 **Revisit if.** The store install-conversion rate looks size-sensitive. Dropping to GDScript-only is the only real lever, and it is not worth it.
+
+### D-18 · Engine-facing types live in the game assembly, their logic does not
+**Context.** Godot registers C# script types **only from the main project assembly**. A `Node` or `Resource` subclass compiled into a referenced library cannot be attached to a scene or resource: Godot answers *"the associated class could not be found"*. Verified in `M0-07` with a controlled A/B — an identical `Resource` subclass instantiates from `Coil.csproj` and fails from `Coil.Presentation.dll`. It is not a path bug; the generator's `res://` path was corrected first (via `GodotProjectDir`, which must be set before `Sdk.props` derives `GodotProjectDirBase64`) and the class still would not resolve.
+
+This contradicted ARCH §2, which placed `ArenaHost`, `SnakeRenderer`, `PelletRenderer` and `BalanceLoader` in `src/Coil.Presentation/`.
+
+**Decision.** The engine-facing *shell* — the `Node` or `Resource` subclass, and any call into a Godot static like `ResourceLoader` — lives in the game assembly. The logic it drives stays in `Coil.Presentation` as a plain class the shell owns and calls. `ArenaHostNode : Node` in the game assembly, `Coil.Presentation.ArenaHost` doing the work.
+
+**Cost.** One shim per engine-facing type, and a boundary that is easy to erode by letting logic drift into the shell. The alternatives were worse: compiling the presentation sources into the game assembly deletes `Coil.Presentation.dll` and the four-project layout `M0-01` established, and moving the layer wholesale gives up the separation ARCH §2 exists to express.
+
+**Revisit if.** Godot gains script registration from referenced assemblies — the engine issue to watch is script type resolution across assemblies. At that point the shells collapse back into `Coil.Presentation` with no change to the logic, which is the point of keeping it out of them.
+
+**Already following it.** `BalanceData` and `BalanceLoader` (`M0-07`). Both are shell by nature: one is a `Resource`, the other is a `ResourceLoader` call, and there is no logic to separate out.

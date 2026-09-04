@@ -58,19 +58,23 @@ game/
       Personas.cs
       Steering/
     Coil.Presentation/           # Godot.NET.Sdk — references Sim + Agents + full Godot API
-      ArenaHost.cs               # drives the tick, owns interpolation
+      ArenaHost.cs               # drives the tick, owns interpolation — plain class
       SnakeRenderer.cs           # MultiMesh writer
       PelletRenderer.cs          # MultiMesh writer
-      BalanceLoader.cs           # balance.tres → SimConfig
   tests/
     Coil.Sim.Tests/              # xUnit — references Coil.Sim, NetArchTest
   ui/                            # GDScript only
-  game/                          # GDScript glue, scenes, VFX
+  game/                          # GDScript glue, scenes, VFX, and C# engine shells
+    ArenaHostNode.cs             # Node shell -> Coil.Presentation.ArenaHost
+    BalanceData.cs               # Resource shell, [Export] per Appendix A constant
+    BalanceLoader.cs             # balance.tres -> SimConfig
   data/                          # .tres resources
   assets/
   tools/                         # deploy.sh, test.sh, release.sh
   docs/
 ```
+
+**Why the engine-facing shells sit in `game/` and not in `Coil.Presentation` (D-18).** Godot registers C# script types only from the main project assembly, so a `Node` or `Resource` subclass compiled into `Coil.Presentation.dll` cannot be attached to a scene — the engine reports "the associated class could not be found". The shell is therefore a thin `Node`/`Resource` in the game assembly that owns and calls a plain class in `Coil.Presentation`, which is where the logic and the tests live. Keep the shells empty: a shell with a rule in it has moved game logic out of the layer that is allowed to hold it.
 
 **Why `Coil.Sim` is a plain `net8.0` library, not a Godot SDK project.** It takes `GodotSharp` as a pinned `PackageReference` for `Vector2` and `Mathf` — pure managed value types that need no engine. Anything in GodotSharp that calls into native code is banned by the architecture tests. If version-pinning GodotSharp against the engine ever becomes painful, the fallback is a hand-rolled `Vec2` struct in `Coil.Sim` and zero Godot dependency at all. **`M0-01` must verify this reference works before anything is built on it.**
 
@@ -139,7 +143,7 @@ Snakes and pellets are **slices into shared buffers**, allocated once at world c
 `Coil.Sim` cannot read a `.tres` file — that is a Godot resource type. The flow is:
 
 ```
-data/balance.tres  ──BalanceLoader (Presentation)──►  SimConfig (POCO)  ──►  new World(config)
+data/balance.tres  ──BalanceLoader (game assembly, D-18)──►  SimConfig (POCO)  ──►  new World(config)
 ```
 
 `SimConfig` is immutable after construction. Every number in spec Appendix A is a field on it. **A literal number in simulation code is a bug**, with two exceptions: `0`, `1`, and mathematical constants.
