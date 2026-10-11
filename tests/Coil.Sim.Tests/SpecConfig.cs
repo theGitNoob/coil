@@ -57,6 +57,12 @@ internal static class SpecConfig
         CameraZoomMax = 1.0f,
         CameraZoomSmoothTime = 0.4f,
 
+        JoystickZone = 0.45f,
+        JoystickRadiusDp = 110.0f,
+        JoystickDeadZone = 0.15f,
+        JoystickDragOut = 1.4f,
+        JoystickFadeTime = 0.15f,
+
         TickRate = 60,
         MaxCatchupTicks = 5,
         BotSteerInterval = 4,

@@ -68,6 +68,13 @@ public partial class BalanceData : Resource
     [Export] public float CameraZoomMax { get; set; } = 1.0f;
     [Export] public float CameraZoomSmoothTime { get; set; } = 0.4f;
 
+    // --- Controls (§3) -----------------------------------------------------
+    [Export] public float JoystickZone { get; set; } = 0.45f;
+    [Export] public float JoystickRadiusDp { get; set; } = 110.0f;
+    [Export] public float JoystickDeadZone { get; set; } = 0.15f;
+    [Export] public float JoystickDragOut { get; set; } = 1.4f;
+    [Export] public float JoystickFadeTime { get; set; } = 0.15f;
+
     // --- Sim (§11) ---------------------------------------------------------
     [Export] public int TickRate { get; set; } = 60;
     [Export] public int MaxCatchupTicks { get; set; } = 5;
@@ -125,6 +132,12 @@ public partial class BalanceData : Resource
         CameraZoomMin = CameraZoomMin,
         CameraZoomMax = CameraZoomMax,
         CameraZoomSmoothTime = CameraZoomSmoothTime,
+
+        JoystickZone = JoystickZone,
+        JoystickRadiusDp = JoystickRadiusDp,
+        JoystickDeadZone = JoystickDeadZone,
+        JoystickDragOut = JoystickDragOut,
+        JoystickFadeTime = JoystickFadeTime,
 
         TickRate = TickRate,
         MaxCatchupTicks = MaxCatchupTicks,

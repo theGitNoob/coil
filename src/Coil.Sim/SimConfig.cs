@@ -149,6 +149,25 @@ public sealed class SimConfig
     /// <summary>Smooth time of the zoom approach, s — zoom never snaps.</summary>
     public required float CameraZoomSmoothTime { get; init; }
 
+    // --- Controls (§3) -----------------------------------------------------
+    // The simulation never reads these: the joystick is GDScript. They ride in
+    // SimConfig because SimConfigTests pins Appendix A to it one-to-one.
+
+    /// <summary>Width of the joystick activation zone, as a fraction of screen width from the left edge.</summary>
+    public required float JoystickZone { get; init; }
+
+    /// <summary>Stick radius, dp.</summary>
+    public required float JoystickRadiusDp { get; init; }
+
+    /// <summary>Fraction of the radius below which the heading is held, not zeroed.</summary>
+    public required float JoystickDeadZone { get; init; }
+
+    /// <summary>Radius multiple beyond which the anchor follows the finger.</summary>
+    public required float JoystickDragOut { get; init; }
+
+    /// <summary>Fade-out time on release, s; the heading holds.</summary>
+    public required float JoystickFadeTime { get; init; }
+
     // --- Sim (§11) ---------------------------------------------------------
 
     /// <summary>Fixed simulation rate, Hz.</summary>

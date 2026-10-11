@@ -76,6 +76,13 @@ public sealed class SimConfigTests
         ("CameraZoomMax", 1.0),
         ("CameraZoomSmoothTime", 0.4),
 
+        // Controls
+        ("JoystickZone", 0.45),
+        ("JoystickRadiusDp", 110.0),
+        ("JoystickDeadZone", 0.15),
+        ("JoystickDragOut", 1.4),
+        ("JoystickFadeTime", 0.15),
+
         // Sim
         ("TickRate", 60),
         ("MaxCatchupTicks", 5),
