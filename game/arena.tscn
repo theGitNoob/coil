@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://game/ArenaHostNode.cs" id="1_arena"]
 [ext_resource type="Script" path="res://game/SnakeRendererNode.cs" id="2_snakes"]
 [ext_resource type="Script" path="res://game/camera.gd" id="3_camera"]
 [ext_resource type="Script" path="res://ui/joystick.gd" id="4_joystick"]
 [ext_resource type="Script" path="res://ui/player_agent.gd" id="5_player"]
+[ext_resource type="Script" path="res://ui/debug_overlay.gd" id="6_debug"]
 
 [node name="Arena" type="Node2D"]
 script = ExtResource("1_arena")
@@ -34,3 +35,16 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("4_joystick")
+
+[node name="DebugOverlay" type="Label" parent="Hud" node_paths=PackedStringArray("host")]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 416.0
+offset_bottom = 136.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.85)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.6)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 14
+script = ExtResource("6_debug")
+host = NodePath("../..")
