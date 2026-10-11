@@ -13,6 +13,7 @@ Budget: **6 ms per tick**, 60 Hz, 34 snakes (CLAUDE.md, §11.5).
 | M0-11 | `World.Tick`, movement only — 34 snakes, 200k ticks | **0.0066 ms/tick** (6.58 µs), 0 B allocated | Desktop, AMD Ryzen 7 7735HS with Radeon Graphics |
 | M0-12 | 200 ms stall recovery, catch-up cap | **5 ticks** in the recovery frame, no cascade | SM-A155M, Android 36 |
 | M0-13 | Draw calls for one 12-segment snake | **2** — one body MultiMesh, one head sprite | SM-A155M, Android 36 |
+| M0-14 | Snapshot capture added to `ArenaHost.Tick` — 34 snakes, 20k ticks | `World.Tick` 14.98 µs → `ArenaHost.Tick` **18.52 µs** (+3.37 µs capture), 0 B allocated | SM-A155M, Android 36 |
 
 ## M0-11 · `World.Tick` baseline
 
@@ -108,3 +109,67 @@ measurement, not drift.
 
 Still no tick-loop delta: M0-13 adds nothing to `World.Tick`. **M0-19 remains
 the gate-critical on-device verdict**, and it now has a renderer to spike with.
+
+## M0-14 · Render interpolation
+
+The tick loop changed: `ArenaHost.Tick` now copies every slot's head, heading,
+radius, path lead and push count before the step, so the renderers have a
+previous state to interpolate from. Measured on the handset with a temporary
+probe (removed before commit), 34 snakes live and steering, 20,000 ticks after a
+600-tick warm-up:
+
+| | µs per tick |
+|---|---|
+| `World.Tick` alone | 14.98 |
+| `ArenaHost.Tick` (capture + `World.Tick`) | 18.52 |
+| Capture alone | 3.37 |
+
+**+3.4 µs of the 6 ms budget, 0 B allocated over 1,000 ticks.** The device is
+about 2.3× slower than the M0-11 desktop floor for the same `World.Tick`.
+
+### Smoothness, measured rather than eyeballed
+
+The same probe drove the placeholder snake in a circle and recorded, every
+frame, how far the drawn head and the drawn 9th body segment moved. Smooth
+motion moves the same distance every frame, so the number to read is the
+coefficient of variation (sd ÷ mean) of that per-frame displacement. *Raw tick*
+is the same measurement taken on the uninterpolated simulation state, which is
+what M0-13 drew.
+
+Panel at 90 Hz, the SM-A155M's maximum. Power saving must be off: it caps the
+panel at 60 Hz.
+
+| Phase | fps | Head, interpolated | Head, raw tick | Segment 8, interpolated | Spacing error |
+|---|---|---|---|---|---|
+| Base speed, uncapped | 90.1 | 2.439 u/frame, **cv 0.009** | 2.440, cv 0.709 | cv 0.009 | ≤ 0.0028 u |
+| Boost, uncapped | 90.1 | 4.213 u/frame, **cv 0.010** | 4.205, cv 0.711 | cv 0.010 | ≤ 0.0013 u |
+| Base speed, `MaxFps = 30` | 30.1 | 7.335 u/frame, cv 0.002 | 7.333, cv 0.000 | cv 0.002 | ≤ 0.0028 u |
+| Boost, `MaxFps = 30` | 30.0 | 12.649 u/frame, cv 0.004 | 12.665, cv 0.000 | cv 0.004 | ≤ 0.0013 u |
+
+- **At 90 Hz the raw state judders**: 60 ticks shared over 90 frames means a
+  frame moves 0, 1 or 2 ticks' worth (cv 0.71). Interpolated, the head *and the
+  body* advance the same distance every frame (cv 0.01).
+- **Capped to 30 it stays correct.** The engine runs two ticks a frame, the
+  snapshot is taken per tick rather than per frame, and the drawn head never
+  trails the simulated one by more than one tick's travel (max 0.39 u at base
+  speed, 2.90 u at boost, against 3.67 u and 6.33 u per tick).
+- **Body spacing holds while drawn**: consecutive instances stay within
+  0.003 u of `PATH_STEP`, through boost ticks that push two path points at once.
+  Segments are laid at fixed arc-length steps behind the interpolated head, not
+  on the raw path points; pinned to the points, the body would advance a whole
+  step every time one was pushed.
+- 120 Hz could not be measured: this panel stops at 90 Hz. Nothing in the
+  interpolation depends on the frame rate beyond the engine's fraction, but the
+  claim is still unverified above 90.
+
+### Seen in passing: redraw cost, for M0-19
+
+The probe also timed `SnakeRenderer.Redraw` at **160–370 µs per frame for one
+live snake** (the higher figures are in the 30 fps phases, where the CPU governor
+clocks down). That frame cost belongs to M0-13's renderer more than to this
+task. Its most likely components are the 543-instance `MultiMesh.Buffer` copy
+noted under M0-13 and the 66 `Visible` writes per frame to empty slots.
+Neither was isolated here. Scaled naively to 34 snakes it would be several
+milliseconds of the 16.7 ms frame. **M0-19 should measure it directly**; it is
+not part of the tick budget above.
+

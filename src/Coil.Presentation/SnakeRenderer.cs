@@ -17,6 +17,12 @@ namespace Coil.Presentation;
 /// reads the simulation's arrays directly, which is the whole reason the
 /// renderers are C# — per-segment transforms never cross to GDScript (ARCH §3).
 ///
+/// Everything is drawn at the host's interpolated state, not the last tick's
+/// (§11.3, M0-14). Segments sit at fixed arc-length steps behind the
+/// interpolated head rather than on the raw path points: a point is only pushed
+/// every step or so, and a body pinned to them would advance in uneven jumps
+/// however smoothly the head moved.
+///
 /// The art is a placeholder. <c>assets/</c> is empty and the snake atlas is
 /// A-02, so this generates a flat disc at construction and tints it. Nothing
 /// here survives A-02, and nothing here decides a palette — that is A-01.
@@ -39,6 +45,7 @@ public sealed class SnakeRenderer
     private static readonly Color BodyTint = new(0.36f, 0.78f, 0.62f);
     private static readonly Color HeadTint = new(0.85f, 0.94f, 0.70f);
 
+    private readonly ArenaHost _host;
     private readonly World _world;
     private readonly SimConfig _config;
 
@@ -56,13 +63,14 @@ public sealed class SnakeRenderer
 
     private readonly int _maxSegments;
 
-    public SnakeRenderer(Node2D root, World world, SimConfig config)
+    public SnakeRenderer(Node2D root, ArenaHost host, SimConfig config)
     {
         ArgumentNullException.ThrowIfNull(root);
-        ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(host);
         ArgumentNullException.ThrowIfNull(config);
 
-        _world = world;
+        _host = host;
+        _world = host.World;
         _config = config;
 
         // Setting InstanceCount reallocates the MultiMesh buffer, so it is
@@ -75,7 +83,7 @@ public sealed class SnakeRenderer
         ImageTexture disc = CreateDiscTexture();
         var quad = new QuadMesh { Size = Vector2.One };
 
-        int slots = world.Capacity;
+        int slots = _world.Capacity;
         _bodyMeshes = new MultiMesh[slots];
         _bodyNodes = new MultiMeshInstance2D[slots];
         _headNodes = new Sprite2D[slots];
@@ -128,10 +136,11 @@ public sealed class SnakeRenderer
 
     /// <summary>
     /// Rewrites every live snake's transform buffer from the simulation's path
-    /// arrays. Called once per frame, not once per tick: the simulation state
-    /// it reads is whatever the last fixed step left behind.
+    /// arrays. Called once per frame, not once per tick, at
+    /// <paramref name="alpha"/> — the physics interpolation fraction, 0 at the
+    /// previous tick and 1 at the current one.
     /// </summary>
-    public void Redraw()
+    public void Redraw(float alpha)
     {
         for (int i = 0; i < _bodyNodes.Length; i++)
         {
@@ -142,26 +151,51 @@ public sealed class SnakeRenderer
                 continue;
             }
 
-            DrawSnake(i);
+            DrawSnake(i, alpha);
         }
     }
 
-    private void DrawSnake(int index)
+    private void DrawSnake(int index, float alpha)
     {
-        // §4.1: the body is sampled from the path, so it is as long as the
-        // formula asks for or as long as the path has grown, whichever is
-        // shorter. Right after a spawn the ring holds one point.
-        int segments = Math.Min(SegmentCount(_world.MassOf(index)), _world.PathCountOf(index));
-        segments = Math.Min(segments, _maxSegments);
+        int wanted = Math.Min(SegmentCount(_world.MassOf(index)), _maxSegments);
+        int available = _world.PathCountOf(index);
+        float step = _config.PathStep;
+
+        Vector2 headPosition = _host.HeadAt(index, alpha);
+        float lead = _host.LeadAt(index, alpha);
 
         // §4.1: radius comes from mass. The disc is authored at unit size, so
         // the instance scale is the diameter in world units.
-        float diameter = _world.RadiusOf(index) * 2f;
+        float diameter = _host.RadiusAt(index, alpha) * 2f;
 
-        for (int age = 0; age < segments; age++)
+        int segments = 0;
+        for (int k = 0; k < wanted; k++)
         {
-            Vector2 point = _world.PathPointOf(index, age);
-            int at = age * FloatsPerInstance;
+            Vector2 point;
+            if (k == 0)
+            {
+                point = headPosition;
+            }
+            else
+            {
+                // §4.1: segment k is k steps of arc length behind the head. The
+                // head is `lead` past the newest point and the points are a step
+                // apart, so this lands between points `newer` and `newer + 1`.
+                float behind = (k * step) - lead;
+                int newer = (int)(behind / step);
+
+                // The body is as long as the formula asks for or as long as the
+                // path has grown, whichever is shorter.
+                if (newer + 1 >= available)
+                {
+                    break;
+                }
+
+                float t = (behind / step) - newer;
+                point = _world.PathPointOf(index, newer).Lerp(_world.PathPointOf(index, newer + 1), t);
+            }
+
+            int at = k * FloatsPerInstance;
 
             _buffer[at] = diameter;
             _buffer[at + 1] = 0f;
@@ -171,6 +205,7 @@ public sealed class SnakeRenderer
             _buffer[at + 5] = diameter;
             _buffer[at + 6] = 0f;
             _buffer[at + 7] = point.Y;
+            segments++;
         }
 
         // The one crossing into the engine for this snake's whole body.
@@ -179,8 +214,8 @@ public sealed class SnakeRenderer
         _bodyNodes[index].Visible = segments > 0;
 
         Sprite2D head = _headNodes[index];
-        head.Position = _world.HeadOf(index);
-        head.Rotation = _world.HeadingOf(index);
+        head.Position = headPosition;
+        head.Rotation = _host.HeadingAt(index, alpha);
         head.Scale = Vector2.One * (diameter / DiscTextureSize);
         head.Visible = true;
     }

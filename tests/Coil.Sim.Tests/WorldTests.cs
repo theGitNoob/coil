@@ -186,6 +186,32 @@ public sealed class WorldTests
         }
     }
 
+    /// <summary>
+    /// The world exposes each snake's position along its own path, so the
+    /// renderer can lay segments at fixed arc-length offsets behind the head
+    /// (§4.1, M0-14). Every tick moves the head speed * dt along a straight
+    /// line, so the total is known exactly even while turning and boosting.
+    /// </summary>
+    [Fact]
+    public void Tick_PathPushesAndLead_AccountForEveryUnitTravelled()
+    {
+        World world = NewWorld(out SimConfig config);
+        world.Spawn(0, Vector2.Zero, heading: 0f, config.MassStart);
+        InputCommand[] commands = Commands(world);
+        float travelled = 0f;
+
+        for (int t = 0; t < 240; t++)
+        {
+            bool boost = t % 7 < 3;
+            commands[0] = new InputCommand(Heading: Mathf.Sin(t * 0.05f) * 2f, Boost: boost, Cast: false);
+            world.Tick(Dt, commands);
+            travelled += (boost ? config.SpeedBoost : config.SpeedBase) * Dt;
+
+            float accounted = (world.PathPushesOf(0) * config.PathStep) + world.LeadOf(0);
+            Assert.Equal(travelled, accounted, 0.01f);
+        }
+    }
+
     /// <summary>ARCH §4 and §5: the tick allocates nothing, for any snake count.</summary>
     [Fact]
     public void Tick_ForAFullArena_DoesNotAllocate()

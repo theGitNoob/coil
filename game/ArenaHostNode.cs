@@ -40,10 +40,11 @@ public sealed partial class ArenaHostNode : Node2D
         _host = new ArenaHost(config);
         _host.SpawnPlaceholderSnake();
 
-        // The host owns the world, so it is the only thing that can hand it to
-        // a renderer. The renderer drives its own frame from there.
+        // The host owns the world and the snapshot the renderer interpolates
+        // from, so it is the only thing that can hand them over. The renderer
+        // drives its own frame from there.
         _snakes = GetNode<SnakeRendererNode>("SnakeRenderer");
-        _snakes.Bind(_host.World, config);
+        _snakes.Bind(this, _host, config);
 
         // Read back rather than assumed: these come from Appendix A via
         // project.godot, and a silently-reverted setting is how a 200 ms stall

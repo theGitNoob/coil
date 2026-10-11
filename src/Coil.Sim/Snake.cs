@@ -37,6 +37,8 @@ public struct PathRing
     /// </summary>
     private float _carry;
 
+    private int _pushes;
+
     public PathRing(int start, int capacity)
     {
         _start = start;
@@ -45,10 +47,25 @@ public struct PathRing
         _newest = 0;
         _lastHead = Vector2.Zero;
         _carry = 0f;
+        _pushes = 0;
     }
 
     /// <summary>Points currently held, at most the capacity.</summary>
     public readonly int Count => _count;
+
+    /// <summary>
+    /// Arc length the head has travelled past the newest point, always less
+    /// than one step. With <see cref="Pushes"/> it places the head exactly
+    /// along its own path, which is what lets the renderer slide segments
+    /// continuously behind an interpolated head (M0-14).
+    /// </summary>
+    public readonly float Lead => _carry;
+
+    /// <summary>
+    /// Points pushed since the seed. Unlike <see cref="Count"/> it does not
+    /// saturate, so differencing it across a tick says how many arrived.
+    /// </summary>
+    public readonly int Pushes => _pushes;
 
     /// <summary>Lays down the first point. Call once, at spawn.</summary>
     public void Seed(Span<Vector2> points, Vector2 head)
@@ -56,6 +73,7 @@ public struct PathRing
         _count = 0;
         _newest = 0;
         _carry = 0f;
+        _pushes = 0;
         _lastHead = head;
 
         points[_start] = head;
@@ -123,6 +141,7 @@ public struct PathRing
         }
 
         points[_start + _newest] = point;
+        _pushes++;
 
         if (_count < _capacity)
         {
