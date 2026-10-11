@@ -60,6 +60,13 @@ public sealed class SimConfig
     public required float LengthPerMass { get; init; }
 
     /// <summary>
+    /// Body disc spacing as a fraction of radius: discs are drawn every
+    /// max(PathStep, radius * this) u along the path. Rendering only — the sim
+    /// and collision read the path itself (M0-23).
+    /// </summary>
+    public required float BodyDiscSpacing { get; init; }
+
+    /// <summary>
     /// The mass the path ring is sized for (§4.1: "sized to max_mass and never
     /// reallocated mid-match"). A snake past this keeps growing longer but its
     /// body is truncated at the ring capacity rather than reallocating.

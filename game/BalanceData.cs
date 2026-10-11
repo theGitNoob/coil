@@ -35,6 +35,7 @@ public partial class BalanceData : Resource
     [Export] public float RadiusMassDivisor { get; set; } = 100.0f;
     [Export] public float LengthBase { get; set; } = 60.0f;
     [Export] public float LengthPerMass { get; set; } = 1.6f;
+    [Export] public float BodyDiscSpacing { get; set; } = 0.5f;
     [Export] public float MaxMass { get; set; } = 2000.0f;
 
     // --- Economy (§4.3) ----------------------------------------------------
@@ -103,6 +104,7 @@ public partial class BalanceData : Resource
         RadiusMassDivisor = RadiusMassDivisor,
         LengthBase = LengthBase,
         LengthPerMass = LengthPerMass,
+        BodyDiscSpacing = BodyDiscSpacing,
         MaxMass = MaxMass,
 
         BoostDrain = BoostDrain,

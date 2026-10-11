@@ -17,6 +17,7 @@ RadiusMax = 46.0
 RadiusMassDivisor = 100.0
 LengthBase = 60.0
 LengthPerMass = 1.6
+BodyDiscSpacing = 0.5
 MaxMass = 2000.0
 BoostDrain = 9.0
 BoostDropInterval = 0.35

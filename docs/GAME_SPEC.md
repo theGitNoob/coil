@@ -117,9 +117,12 @@ Body segments are *sampled from the path*, not simulated. Rendering and collisio
 
 ```
 length_units = 60 + mass * 1.6          # arc length of visible body
-segment_count = length_units / PATH_STEP
 radius = clamp(14.0 * pow(1.0 + mass / 100.0, 0.25), 14.0, 46.0)
+disc_spacing = max(PATH_STEP, radius * 0.5)
+segment_count = length_units / disc_spacing
 ```
+
+The body is drawn as discs every `disc_spacing` of arc length behind the head. Spacing them by radius rather than every `PATH_STEP` is a fill-rate decision (`M0-19`, `M0-23`): a 60 u disc every 6 u covers each body pixel about ten times. At half a radius apart, the scallop between discs is about 3% of the radius, under a pixel at any zoom. The path itself keeps its `PATH_STEP` spacing, and collision reads the path, not the discs.
 
 Ring buffer is sized to `max_mass` and never reallocated mid-match.
 
@@ -396,7 +399,7 @@ Nothing in v1 should be written in a way that breaks this. When in doubt: does t
 
 ### 11.5 Rendering
 
-- **Snake bodies:** one `MultiMeshInstance2D` per snake, one instance per segment, transforms written in bulk from the path buffer each frame. 40 snakes ≈ 40 draw calls.
+- **Snake bodies:** one `MultiMeshInstance2D` per snake, one instance per body disc (§4.1 `disc_spacing`), transforms written in bulk from the path buffer each frame. 40 snakes ≈ 40 draw calls.
 - **Pellets:** a single `MultiMeshInstance2D` for all ~2,600 pellets. One draw call.
 - **Heads:** separate sprites (they need eyes, class tint, name label).
 - No `Sprite2D` per segment. Ever.
@@ -501,6 +504,7 @@ RADIUS_MAX             46.0
 RADIUS_MASS_DIVISOR   100.0   -> radius = clamp(14*(1 + mass/100)^0.25, 14, 46)
 LENGTH_BASE            60.0
 LENGTH_PER_MASS         1.6
+BODY_DISC_SPACING       0.5         -> body discs drawn every max(PATH_STEP, radius * 0.5) u; §4.1
 MAX_MASS             2000.0   sizes the path ring; §4.1
 
 # Economy
