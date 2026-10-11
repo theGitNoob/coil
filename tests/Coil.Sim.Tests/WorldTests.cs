@@ -37,6 +37,16 @@ public sealed class WorldTests
         }
     }
 
+    /// <summary>ARCH §4: pellets are allocated once at construction, at the configured pool size.</summary>
+    [Fact]
+    public void World_Construction_AllocatesFoodAtPelletCapacity()
+    {
+        World world = NewWorld(out SimConfig config);
+
+        Assert.Equal(config.PelletCapacity, world.Food.Capacity);
+        Assert.Equal(0, world.Food.Count);
+    }
+
     /// <summary>§4.2 step 3: head += RIGHT.rotated(heading) * speed * dt.</summary>
     [Fact]
     public void Tick_MovesTheHeadAlongItsHeading_AtBaseSpeed()

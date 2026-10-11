@@ -526,6 +526,7 @@ ARENA_RADIUS         3500.0   u
 BORDER_WARN_RADIUS   3350.0   u
 SNAKE_COUNT            34
 PELLET_TARGET        2600
+PELLET_CAPACITY      3000          pool size; never resized — M1-01
 CELL_SIZE              96.0   u
 GRACE_DURATION          2.0   s
 

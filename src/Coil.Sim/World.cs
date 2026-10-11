@@ -28,6 +28,8 @@ public sealed class World
     private readonly float[] _masses;
     private readonly bool[] _alive;
 
+    private readonly Food _food;
+
     public World(SimConfig config)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -47,6 +49,7 @@ public sealed class World
         _headings = new float[_capacity];
         _masses = new float[_capacity];
         _alive = new bool[_capacity];
+        _food = new Food(config.PelletCapacity);
 
         for (int i = 0; i < _capacity; i++)
         {
@@ -56,6 +59,9 @@ public sealed class World
 
     /// <summary>Snake slots in this world, live or not.</summary>
     public int Capacity => _capacity;
+
+    /// <summary>The pellet store. World owns all mutable state; outsiders read pellets through this, and its mutators are internal.</summary>
+    public Food Food => _food;
 
     public bool IsAlive(int index) => _alive[index];
 

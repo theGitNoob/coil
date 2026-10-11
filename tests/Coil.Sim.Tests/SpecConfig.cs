@@ -47,6 +47,7 @@ internal static class SpecConfig
         BorderWarnRadius = 3350.0f,
         SnakeCount = 34,
         PelletTarget = 2600,
+        PelletCapacity = 3000,
         CellSize = 96.0f,
         GraceDuration = 2.0f,
 

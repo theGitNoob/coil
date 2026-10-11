@@ -125,6 +125,12 @@ public sealed class SimConfig
     /// <summary>Pellet population the spawner maintains.</summary>
     public required int PelletTarget { get; init; }
 
+    /// <summary>
+    /// Pellet pool size, allocated once and never resized. Headroom above
+    /// <see cref="PelletTarget"/> for corpse and boost drops — M1-01.
+    /// </summary>
+    public required int PelletCapacity { get; init; }
+
     /// <summary>Spatial hash cell edge, u.</summary>
     public required float CellSize { get; init; }
 

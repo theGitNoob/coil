@@ -65,6 +65,7 @@ public sealed class SimConfigTests
         ("BorderWarnRadius", 3350.0),
         ("SnakeCount", 34),
         ("PelletTarget", 2600),
+        ("PelletCapacity", 3000),
         ("CellSize", 96.0),
         ("GraceDuration", 2.0),
 
