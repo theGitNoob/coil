@@ -213,6 +213,67 @@ public sealed class PathRingTests
         Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
     }
 
+    /// <summary>
+    /// M0-14 renders the body at fixed arc-length offsets behind an
+    /// interpolated head, which only works if the ring can say exactly where
+    /// the head sits along the path: <c>Pushes * PATH_STEP + Lead</c> must be
+    /// the arc length travelled since the seed, through turns and jittered dt.
+    /// </summary>
+    [Fact]
+    public void PathRing_PushesAndLead_AccountForEveryUnitOfArcTravelled()
+    {
+        (Vector2[] points, PathRing ring) = NewRing(capacity: 256);
+        ring.Seed(points, Vector2.Zero);
+
+        float[] deltas = [1f / 60f, 1f / 144f, 1f / 30f, 0.05f, 1f / 90f, 1f / 20f];
+        float[] speeds = [220f, 380f, 220f, 90f];
+        float heading = 0f;
+        Vector2 head = Vector2.Zero;
+        float travelled = 0f;
+
+        for (int i = 0; i < 90; i++)
+        {
+            float dt = deltas[i % deltas.Length];
+            heading += 3.0f * dt;
+            Vector2 step = new Vector2(Mathf.Cos(heading), Mathf.Sin(heading)) * speeds[i % speeds.Length] * dt;
+            head += step;
+            travelled += step.Length();
+            ring.Advance(points, head, PathStep);
+
+            Assert.Equal(travelled, (ring.Pushes * PathStep) + ring.Lead, Tolerance);
+
+            // The renderer relies on this bound: the head is never a whole
+            // step or more past the newest point, or a point is missing.
+            Assert.InRange(ring.Lead, 0f, PathStep);
+            Assert.True(ring.Lead < PathStep);
+        }
+    }
+
+    /// <summary>
+    /// Count saturates at the capacity; Pushes must not, because the renderer
+    /// tells how many points arrived in one tick by differencing it.
+    /// </summary>
+    [Fact]
+    public void PathRing_Pushes_KeepsCountingPastCapacity_AndResetsOnSeed()
+    {
+        const int capacity = 8;
+        (Vector2[] points, PathRing ring) = NewRing(capacity);
+        ring.Seed(points, Vector2.Zero);
+
+        for (int i = 1; i <= 40; i++)
+        {
+            ring.Advance(points, new Vector2(PathStep * i, 0f), PathStep);
+        }
+
+        Assert.Equal(capacity, ring.Count);
+        Assert.Equal(40, ring.Pushes);
+
+        ring.Seed(points, Vector2.Zero);
+
+        Assert.Equal(0, ring.Pushes);
+        Assert.Equal(0f, ring.Lead);
+    }
+
     private static void AssertSpacingHolds(Vector2[] points, in PathRing ring)
     {
         Assert.True(ring.Count > 2, "the run pushed too few points to prove anything");

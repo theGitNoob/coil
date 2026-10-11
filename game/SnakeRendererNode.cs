@@ -29,15 +29,19 @@ namespace Coil;
 public sealed partial class SnakeRendererNode : Node2D
 {
     private SnakeRenderer? _renderer;
+    private ArenaHostNode? _hostNode;
 
     /// <summary>
-    /// Hands the renderer the world it draws. Called once by the arena host,
-    /// which owns the world: a renderer with nothing to read is not a valid
-    /// state, so this is a hand-off rather than something _Ready can do alone.
+    /// Hands the renderer the host it draws. Called once by the arena host,
+    /// which owns the world and its snapshots: a renderer with nothing to read
+    /// is not a valid state, so this is a hand-off rather than something _Ready
+    /// can do alone. The node is kept for its interpolation fraction.
     /// </summary>
-    public void Bind(World world, SimConfig config)
+    public void Bind(ArenaHostNode hostNode, ArenaHost host, SimConfig config)
     {
-        _renderer = new SnakeRenderer(this, world, config);
+        _hostNode = hostNode;
+        _renderer = new SnakeRenderer(this, host, config);
+        World world = host.World;
 
         // The claim in spec §11.5 is "no Sprite2D per segment, ever", and this
         // is the number that would betray it: one body plus one head per slot,
@@ -49,5 +53,5 @@ public sealed partial class SnakeRendererNode : Node2D
             + $"instances     {_renderer.MaxSegments} preallocated per body");
     }
 
-    public override void _Process(double delta) => _renderer?.Redraw();
+    public override void _Process(double delta) => _renderer?.Redraw(_hostNode!.InterpolationFraction);
 }

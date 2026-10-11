@@ -70,6 +70,12 @@ public sealed class World
 
     public int PathCountOf(int index) => _paths[index].Count;
 
+    /// <summary>Arc length the head is past its newest path point, under one step.</summary>
+    public float LeadOf(int index) => _paths[index].Lead;
+
+    /// <summary>Path points pushed since spawn; never saturates at the ring size.</summary>
+    public int PathPushesOf(int index) => _paths[index].Pushes;
+
     /// <summary>A path point by age: 0 is the newest, nearest the head.</summary>
     public Vector2 PathPointOf(int index, int age) => _paths[index].PointAt(_pathPoints, age);
 
