@@ -15,6 +15,7 @@ Budget: **6 ms per tick**, 60 Hz, 34 snakes (CLAUDE.md, §11.5).
 | M0-13 | Draw calls for one 12-segment snake | **2** — one body MultiMesh, one head sprite | SM-A155M, Android 36 |
 | M0-14 | Snapshot capture added to `ArenaHost.Tick` — 34 snakes, 20k ticks | `World.Tick` 14.98 µs → `ArenaHost.Tick` **18.52 µs** (+3.37 µs capture), 0 B allocated | SM-A155M, Android 36 |
 | M0-15 | Camera follow, focus head's on-screen motion over 600 frames at 90 Hz | **≤ 0.003 px/frame** (sd 0.0003), zoom 0.9917 at mass 10 | SM-A155M, Android 36 |
+| M0-19 | ⚠ Perf spike, 34 snakes, render plan as of M0-15 | **A gameplay-like: 89.9 fps** (0.22% frames > 16.7 ms). **B worst case, 34 × MaxMass on screen: 39.8 fps**, GPU-bound by overdraw | SM-A155M (Helio G99, Mali-G57 MC2), Android 36 |
 
 ## M0-11 · `World.Tick` baseline
 
@@ -199,4 +200,59 @@ so once the camera followed the snake away from the origin, the body was culled
 and only the head was drawn. `SnakeRenderer` now sets `CustomAabb` per body each
 frame. Off-screen bodies are therefore genuinely culled now, which M0-19's
 draw-call count should reflect.
+
+## M0-19 · ⚠ Perf spike — the render-plan verdict
+
+`tools/spike_render.tscn` (throwaway) drives the real `World`, `ArenaHost` and
+`SnakeRenderer` with synthetic commands: every snake circles at a fixed rate,
+so the paths are real path rings, with no AI and no collision. Path rings are
+pre-filled to full body length before measuring. Run on the handset at its
+90 Hz panel, 5 s settle, then 30 s measured per scenario.
+
+The SM-A155M is a MediaTek Helio G99 with a Mali-G57 MC2. It sits around the
+spec's floor tier (§11.6: Snapdragon 6-series, 2021). Its GPU is the weaker
+part.
+
+| | A — gameplay-like | B — worst case |
+|---|---|---|
+| Setup | masses log-spaced 10..2000, spread over ~1,600 u, zoom 0.66 | all 34 at MaxMass (543 segments each), all on screen, overlapping, zoom 0.55 |
+| fps | **89.9** (per 10 s: 90.1, 89.6) | **39.8** (39.9, 39.7) |
+| frame ms | avg 11.12, p50 11.09, p95 12.69, p99 15.22, max 62.94 | avg 25.14, p50 22.44, p95 34.40, p99 37.64 |
+| frames > 16.7 ms | 6 of 2,698 (0.22%) | 1,076 of 1,194 (90%) |
+| tick ms (34 snakes) | avg 0.074, max 0.673 | avg 0.068, max 0.366 |
+| `SnakeRenderer.Redraw` | avg 3.16 ms | avg 10.42 ms |
+| GPU per frame | 2.31 ms | **22.28 ms** |
+| draw calls | avg 14, max 18 | 35 |
+
+**Verdict: the gameplay-like case holds 90 fps with room to spare; the worst
+case does not hold 60.** The tick costs nothing at this stage (0.07 ms of the
+6 ms budget). Both failures in B come from rendering.
+
+### Where B's frame goes
+
+A second run with the renderer temporarily instrumented and a knob to space
+body discs further apart along the path (stride = path steps per disc; 15 s per
+run). The knob and timers were removed before commit.
+
+| Run | fps | GPU ms | Redraw ms | segment loop | `Buffer` set | other node writes |
+|---|---|---|---|---|---|---|
+| A, stride 1 | 89.8 | 2.24 | 3.46 | 2.76 | 0.72 | 1.05 |
+| B, stride 1 | 39.9 | 22.24 | 10.20 | **11.42** | 0.75 | 1.06 |
+| B, stride 2 | 61.2 | 11.23 | 6.07 | 6.26 | 0.72 | 1.08 |
+| B, stride 3 | 70.3 | 9.31 | 4.51 | 4.22 | 0.68 | 1.02 |
+
+- **GPU: overdraw.** 34 × 543 translucent discs, each ~60 u across, sitting
+  6 u apart means every body pixel is covered by about ten discs of the same
+  snake. Spacing them 2× apart halves the GPU time; 3× takes B to 70 fps.
+- **CPU: the per-segment loop, not the buffer copy.** M0-13 suspected the
+  543-instance `Buffer` copy. It costs 0.7 ms per frame for all 34 snakes. The
+  loop that computes segment positions costs **~0.6 µs per segment**, which is
+  an order of magnitude more than its arithmetic should need. It makes two
+  cross-assembly `PathPointOf` calls and several Godot `Vector2` method calls
+  per segment, which this runtime does not appear to inline.
+- Node property writes (visibility, instance count, bounds, head transform)
+  are a flat ~1 ms for 68 nodes.
+
+What to do about B is a render-plan decision, recorded in the M0-19 PR rather
+than settled here.
 
