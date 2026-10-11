@@ -67,6 +67,15 @@ public sealed class SimConfigTests
         ("CellSize", 96.0),
         ("GraceDuration", 2.0),
 
+        // Camera
+        ("CameraSmoothTime", 0.12),
+        ("CameraLookAhead", 40.0),
+        ("CameraZoomBase", 1.0),
+        ("CameraZoomExp", -0.35),
+        ("CameraZoomMin", 0.55),
+        ("CameraZoomMax", 1.0),
+        ("CameraZoomSmoothTime", 0.4),
+
         // Sim
         ("TickRate", 60),
         ("MaxCatchupTicks", 5),

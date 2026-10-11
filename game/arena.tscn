@@ -1,13 +1,15 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://game/ArenaHostNode.cs" id="1_arena"]
 [ext_resource type="Script" path="res://game/SnakeRendererNode.cs" id="2_snakes"]
+[ext_resource type="Script" path="res://game/camera.gd" id="3_camera"]
 
 [node name="Arena" type="Node2D"]
 script = ExtResource("1_arena")
 
-; Unconfigured on purpose — see SnakeRendererNode. §7.4's camera is M0-15.
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Camera2D" type="Camera2D" parent="." node_paths=PackedStringArray("host")]
+script = ExtResource("3_camera")
+host = NodePath("..")
 
 [node name="SnakeRenderer" type="Node2D" parent="."]
 script = ExtResource("2_snakes")

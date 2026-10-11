@@ -168,6 +168,11 @@ public sealed class SnakeRenderer
         // the instance scale is the diameter in world units.
         float diameter = _host.RadiusAt(index, alpha) * 2f;
 
+        // Culling bounds, grown as segments are written — see the CustomAabb
+        // assignment below.
+        Vector2 min = headPosition;
+        Vector2 max = headPosition;
+
         int segments = 0;
         for (int k = 0; k < wanted; k++)
         {
@@ -206,10 +211,23 @@ public sealed class SnakeRenderer
             _buffer[at + 6] = 0f;
             _buffer[at + 7] = point.Y;
             segments++;
+
+            min = min.Min(point);
+            max = max.Max(point);
         }
 
         // The one crossing into the engine for this snake's whole body.
         _bodyMeshes[index].Buffer = _buffer;
+
+        // A buffer write does not refresh the bounds Godot culls the body by,
+        // so without this the body vanishes once the camera follows it away
+        // from where it was first drawn. Padded by the radius: the bounds are
+        // of instance origins, the discs extend past them.
+        Vector2 pad = new(diameter * 0.5f, diameter * 0.5f);
+        Vector2 size = max - min + (pad * 2f);
+        _bodyMeshes[index].CustomAabb = new Aabb(
+            new Vector3(min.X - pad.X, min.Y - pad.Y, 0f),
+            new Vector3(size.X, size.Y, 0f));
         _bodyMeshes[index].VisibleInstanceCount = segments;
         _bodyNodes[index].Visible = segments > 0;
 

@@ -18,6 +18,9 @@ namespace Coil;
 /// </summary>
 public sealed partial class ArenaHostNode : Node2D
 {
+    // The snake the camera follows. M0-17's player agent drives this slot.
+    private const int FocusSlot = 0;
+
     private ArenaHost? _host;
     private SnakeRendererNode? _snakes;
     private int _ticksThisFrame;
@@ -31,6 +34,15 @@ public sealed partial class ArenaHostNode : Node2D
     // not be reachable from GDScript at all. The value is global to the frame.
     public float InterpolationFraction => (float)Engine.GetPhysicsInterpolationFraction();
 #pragma warning restore CA1822
+
+    /// <summary>Interpolated head of the focus snake, for the camera (§7.4, M0-15).</summary>
+    public Vector2 FocusPosition => _host?.HeadAt(FocusSlot, InterpolationFraction) ?? Vector2.Zero;
+
+    /// <summary>Interpolated heading of the focus snake, radians.</summary>
+    public float FocusHeading => _host?.HeadingAt(FocusSlot, InterpolationFraction) ?? 0.0f;
+
+    /// <summary>Interpolated radius of the focus snake, u.</summary>
+    public float FocusRadius => _host?.RadiusAt(FocusSlot, InterpolationFraction) ?? 0.0f;
 
     public long TickCount => _host?.TickCount ?? 0;
 

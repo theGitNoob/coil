@@ -247,7 +247,7 @@ Combined effect: leading is achievable and prestigious, but it is a target, not 
 ### 7.4 Camera
 
 - Follows the head with a 0.12s critically-damped smoothing.
-- Zoom scales with radius: `zoom = base_zoom * pow(radius / 14.0, -0.35)`, clamped to [0.55, 1.0].
+- Zoom scales with radius: `zoom = base_zoom * pow(radius / 14.0, -0.35)`, clamped to [0.55, 1.0]. `base_zoom` is `CAMERA_ZOOM_BASE` = 1.0 — equal to the clamp ceiling, so a snake at `RADIUS_BASE` (the 14.0 in the formula) is shown 1:1 and only growth zooms out.
 - Zoom lerps over 0.4s (never snaps — snap zoom is nausea).
 - Slight look-ahead: camera centre offsets 40 u along the heading.
 
@@ -524,6 +524,15 @@ SNAKE_COUNT            34
 PELLET_TARGET        2600
 CELL_SIZE              96.0   u
 GRACE_DURATION          2.0   s
+
+# Camera
+CAMERA_SMOOTH_TIME      0.12  s     critically damped follow; §7.4
+CAMERA_LOOK_AHEAD      40.0   u     along the heading
+CAMERA_ZOOM_BASE        1.0         -> zoom = clamp(1.0 * (radius/RADIUS_BASE)^-0.35, 0.55, 1.0)
+CAMERA_ZOOM_EXP        -0.35
+CAMERA_ZOOM_MIN         0.55
+CAMERA_ZOOM_MAX         1.0
+CAMERA_ZOOM_SMOOTH_TIME 0.4   s     zoom never snaps
 
 # Sim
 TICK_RATE              60     Hz

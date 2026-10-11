@@ -91,7 +91,7 @@ There are exactly three sanctioned crossings, and adding a fourth is a design di
 | # | Direction | Payload | Frequency |
 |---|---|---|---|
 | 1 | GDScript → C# | Player `InputCommand` (three fields) | once per tick |
-| 2 | C# → GDScript | `HudSnapshot`: own mass, cooldown, leaderboard rows, minimap dots | once per frame |
+| 2 | C# → GDScript | `HudSnapshot`: own mass, cooldown, leaderboard rows, minimap dots, and the focus snake's interpolated head, heading and radius for the camera | once per frame |
 | 3 | C# → GDScript | Drained `SimEvent` list (kills, eats, casts, near-misses) | once per frame |
 
 Everything bulk — path buffers, pellet positions, per-segment transforms — **never crosses**. `SnakeRenderer` and `PelletRenderer` are C# precisely so they can read simulation arrays directly and write `MultiMesh` buffers with no copy.
