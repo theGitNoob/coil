@@ -17,6 +17,7 @@ Budget: **6 ms per tick**, 60 Hz, 34 snakes (CLAUDE.md, §11.5).
 | M0-15 | Camera follow, focus head's on-screen motion over 600 frames at 90 Hz | **≤ 0.003 px/frame** (sd 0.0003), zoom 0.9917 at mass 10 | SM-A155M, Android 36 |
 | M0-19 | ⚠ Perf spike, 34 snakes, render plan as of M0-15 | **A gameplay-like: 89.9 fps** (0.22% frames > 16.7 ms). **B worst case, 34 × MaxMass on screen: 39.8 fps**, GPU-bound by overdraw | SM-A155M (Helio G99, Mali-G57 MC2), Android 36 |
 | M0-24 | Renderer segment loop over the raw ring, spike scenarios | A: **2.76 → 0.75 ms**/frame; B: **11.42 → 3.32 ms**/frame; positions within 0.0004 u of before | SM-A155M, Android 36 |
+| M0-23 | Body discs every max(PATH_STEP, radius/2), M0-19 worst case | **39.8 → 80.7 fps** at 90 Hz; **59.8 fps, 0.56% missed vsync** with the panel at 60 Hz; GPU p99 15.2 ms | SM-A155M, Android 36 |
 
 ## M0-11 · `World.Tick` baseline
 
@@ -277,4 +278,48 @@ outside the timed region, it recomputed every segment the old way and compared:
 The difference is float rounding: `ages` is now a multiply by `1 / PATH_STEP`
 instead of a divide. B still runs at ~40 fps because it is GPU-bound (22 ms per
 frame), which is M0-23's job. Tick unchanged.
+
+## M0-23 · Body discs spaced by radius — M0-19 gate re-measured
+
+Second M0-19 fix. Discs are drawn every
+`max(PATH_STEP, radius × BODY_DISC_SPACING)` of arc length with
+`BODY_DISC_SPACING = 0.5`. A max-mass snake (radius ~30) now draws a disc every
+15 u instead of every 6 u. Small snakes (radius 14) go from 6 u to 7 u. The path
+itself is untouched, and collision reads the path.
+
+Re-run of the M0-19 spike, 30 s per scenario, with M0-24's loop in place. The
+spike now counts *missed vsyncs* (frames longer than 1.5 refresh intervals)
+rather than frames over 16.7 ms: on a 60 Hz panel half of all frames land a
+hair over 16.67 ms from timer jitter alone, which is not a miss.
+
+**Panel at 90 Hz** (comparable with M0-19):
+
+| | A — gameplay-like | B — worst case |
+|---|---|---|
+| fps | 89.9 | **80.7** (M0-19: 39.8) |
+| frame ms | avg 11.12, p95 12.55 | avg 12.39, p50 11.19, p95 22.39 |
+| `Redraw` | 1.58 ms (M0-19: 3.16) | 2.33 ms (M0-19: 10.42) |
+| GPU / frame | 1.66 ms | **9.51 ms** (M0-19: 22.28) |
+
+**Panel at 60 Hz** (Samsung "Standard" motion smoothness, set for the run and
+restored after): the floor-device target, where a frame over budget is a real
+dropped frame.
+
+| | A — gameplay-like | B — worst case |
+|---|---|---|
+| fps | **60.0** (per 10 s: 60.1, 59.8) | **59.8** (59.7, 59.9) |
+| missed vsync (> 25 ms) | 3 of 1,800 (0.17%) | 10 of 1,794 (0.56%) |
+| GPU p95 / p99 | 4.30 / 8.35 ms | 14.74 / 15.18 ms |
+| `Redraw` | 1.60 ms | 2.33 ms |
+| tick | 0.083 ms | 0.077 ms |
+
+**Gate: the worst case holds 60 fps.** GPU time reads higher at 60 Hz than at
+90 Hz (13.8 vs 9.5 ms average) because the GPU clocks down when it has slack.
+Its p99 of 15.2 ms is the real headroom figure: about 1.5 ms. That headroom
+belongs to a scene no real match produces (68,000 mass on one screen). M2-13
+re-measures with real bots, pellets and collision.
+
+Visual check: a screenshot of the gameplay-like scenario, enlarged 2×, shows a
+faint 1 px ripple on the edge of the largest bodies. At native size they read
+as smooth tubes, consistent with a scallop depth of ~3% of the radius.
 

@@ -32,6 +32,7 @@ public sealed partial class SpikeRenderNode : Node2D
 
     private readonly float[] _frameMs = new float[MaxFrames];
     private readonly float[] _redrawMs = new float[MaxFrames];
+    private readonly float[] _gpuMs = new float[MaxFrames];
 
     private SimConfig _config = null!;
     private ArenaHost _host = null!;
@@ -179,11 +180,17 @@ public sealed partial class SpikeRenderNode : Node2D
         {
             _frameMs[_frames] = frame;
             _redrawMs[_frames] = redraw;
-            _frames++;
         }
 
-        _gpuMsSum += RenderingServer.ViewportGetMeasuredRenderTimeGpu(_viewport);
-        _cpuRenderMsSum += RenderingServer.ViewportGetMeasuredRenderTimeCpu(_viewport);
+        float gpu = (float)RenderingServer.ViewportGetMeasuredRenderTimeGpu(_viewport);
+        float cpuRender = (float)RenderingServer.ViewportGetMeasuredRenderTimeCpu(_viewport);
+        _gpuMsSum += gpu;
+        _cpuRenderMsSum += cpuRender;
+        if (_frames < MaxFrames)
+        {
+            _gpuMs[_frames] = gpu;
+            _frames++;
+        }
         int drawCalls = (int)Performance.GetMonitor(Performance.Monitor.RenderTotalDrawCallsInFrame);
         _drawCallsSum += drawCalls;
         _drawCallsMax = Math.Max(_drawCallsMax, drawCalls);
@@ -217,21 +224,21 @@ public sealed partial class SpikeRenderNode : Node2D
         int n = _frames;
         float[] frames = _frameMs[..n];
         float[] redraws = _redrawMs[..n];
+        float[] gpus = _gpuMs[..n];
+        Array.Sort(gpus);
         float frameAvg = Average(frames);
         Array.Sort(frames);
         Array.Sort(redraws);
-        int over60 = 0;
-        int over90 = 0;
+        // A frame that missed its vsync lasts two intervals or more; 1.5
+        // intervals separates those from ordinary timer jitter around one.
+        float refresh = DisplayServer.ScreenGetRefreshRate();
+        float missThreshold = 1000f / refresh * 1.5f;
+        int missed = 0;
         for (int i = 0; i < n; i++)
         {
-            if (frames[i] > 1000f / 60f)
+            if (frames[i] > missThreshold)
             {
-                over60++;
-            }
-
-            if (frames[i] > 1000f / 90f * 1.5f)
-            {
-                over90++;
+                missed++;
             }
         }
 
@@ -240,10 +247,11 @@ public sealed partial class SpikeRenderNode : Node2D
             $"COIL spike [{name}] {MeasureSeconds:F0} s, {n} frames, refresh {DisplayServer.ScreenGetRefreshRate():F0} Hz\n"
             + $"  fps         {n / MeasureSeconds:F1} avg; per 10 s:{_windows}\n"
             + $"  frame ms    avg {frameAvg:F2}  p50 {Pct(frames, 0.50f):F2}  p95 {Pct(frames, 0.95f):F2}  p99 {Pct(frames, 0.99f):F2}  max {frames[n - 1]:F2}\n"
-            + $"  frames > 16.7 ms (missed 60 fps): {over60} ({100f * over60 / n:F2}%), > 16.7 ms counted vs 90 Hz vsync: {over90}\n"
+            + $"  missed vsync (> {missThreshold:F1} ms): {missed} ({100f * missed / n:F2}%)\n"
             + $"  tick ms     avg {_tickMsSum / Math.Max(_ticks, 1):F3}  max {_tickMsMax:F3}  ({_ticks} ticks, budget 6 ms)\n"
             + $"  redraw ms   avg {Average(redraws):F3}  p95 {Pct(redraws, 0.95f):F3}  max {redraws[n - 1]:F3}\n"
             + $"  render      cpu {_cpuRenderMsSum / n:F2} ms  gpu {_gpuMsSum / n:F2} ms (avg per frame)\n"
+            + $"  gpu         p95 {Pct(gpus, 0.95f):F2}  p99 {Pct(gpus, 0.99f):F2} ms  (60 fps needs < 16.7)\n"
             + $"  draw calls  avg {(double)_drawCallsSum / n:F1}  max {_drawCallsMax}  (budget 80)");
     }
 

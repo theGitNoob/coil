@@ -27,6 +27,7 @@ internal static class SpecConfig
         RadiusMassDivisor = 100.0f,
         LengthBase = 60.0f,
         LengthPerMass = 1.6f,
+        BodyDiscSpacing = 0.5f,
         MaxMass = 2000.0f,
 
         BoostDrain = 9.0f,

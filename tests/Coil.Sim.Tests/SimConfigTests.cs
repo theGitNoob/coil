@@ -43,6 +43,7 @@ public sealed class SimConfigTests
         ("RadiusMassDivisor", 100.0),
         ("LengthBase", 60.0),
         ("LengthPerMass", 1.6),
+        ("BodyDiscSpacing", 0.5),
         ("MaxMass", 2000.0),
 
         // Economy

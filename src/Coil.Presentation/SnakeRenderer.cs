@@ -77,7 +77,7 @@ public sealed class SnakeRenderer
         // sized once here for the longest body a snake can have and never
         // touched again — the same reason §4.1 sizes the path ring to MaxMass
         // rather than growing it. Only VisibleInstanceCount moves per frame.
-        _maxSegments = SegmentCount(_config.MaxMass);
+        _maxSegments = SegmentCount(_config.MaxMass, _config.PathStep);
         _buffer = new float[_maxSegments * FloatsPerInstance];
 
         ImageTexture disc = CreateDiscTexture();
@@ -157,7 +157,6 @@ public sealed class SnakeRenderer
 
     private void DrawSnake(int index, float alpha)
     {
-        int wanted = Math.Min(SegmentCount(_world.MassOf(index)), _maxSegments);
         int available = _world.PathCountOf(index);
         float step = _config.PathStep;
 
@@ -166,7 +165,13 @@ public sealed class SnakeRenderer
 
         // §4.1: radius comes from mass. The disc is authored at unit size, so
         // the instance scale is the diameter in world units.
-        float diameter = _host.RadiusAt(index, alpha) * 2f;
+        float radius = _host.RadiusAt(index, alpha);
+        float diameter = radius * 2f;
+
+        // §4.1: discs every max(PATH_STEP, radius * BODY_DISC_SPACING) of arc
+        // length — spaced by radius so a big body is not ten discs deep (M0-23).
+        float spacing = Math.Max(step, radius * _config.BodyDiscSpacing);
+        int wanted = Math.Min(SegmentCount(_world.MassOf(index), spacing), _maxSegments);
 
         // Plain float math over the raw ring from here on: this loop runs for
         // every segment of every snake each frame, and the runtime on the
@@ -189,10 +194,10 @@ public sealed class SnakeRenderer
 
         for (int k = 1; k < wanted; k++)
         {
-            // §4.1: segment k is k steps of arc length behind the head. The
+            // §4.1: disc k is k spacings of arc length behind the head. The
             // head is `lead` past the newest point and the points are a step
             // apart, so this lands between ages `newer` and `newer + 1`.
-            float ages = ((k * step) - lead) * inverseStep;
+            float ages = ((k * spacing) - lead) * inverseStep;
             int newer = (int)ages;
 
             // The body is as long as the formula asks for or as long as the
@@ -283,10 +288,11 @@ public sealed class SnakeRenderer
 
     /// <summary>
     /// §4.1: <c>length_units = 60 + mass * 1.6</c>,
-    /// <c>segment_count = length_units / PATH_STEP</c>.
+    /// <c>segment_count = length_units / disc_spacing</c>. Sized at construction
+    /// with the smallest spacing, PATH_STEP, so no later spacing can exceed it.
     /// </summary>
-    private int SegmentCount(float mass) =>
-        (int)((_config.LengthBase + (mass * _config.LengthPerMass)) / _config.PathStep);
+    private int SegmentCount(float mass, float spacing) =>
+        (int)((_config.LengthBase + (mass * _config.LengthPerMass)) / spacing);
 
     /// <summary>
     /// A white disc, generated rather than loaded: the atlas is A-02 and
