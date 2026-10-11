@@ -1,3 +1,5 @@
+using System;
+using System.Diagnostics;
 using Coil.Presentation;
 using Coil.Sim;
 using Godot;
@@ -25,6 +27,13 @@ public sealed partial class ArenaHostNode : Node2D
     private SnakeRendererNode? _snakes;
     private int _ticksThisFrame;
 
+    // Debug overlay figures (M0-18). Measured here, around the tick, because
+    // Coil.Sim may not read a clock; cheap enough to leave on in every build.
+    private float _lastTickMs;
+    private float _peakTickMs;
+    private long _lastTickAllocatedBytes;
+    private long _tickAllocatedBytes;
+
     /// <summary>
     /// How far between the previous and current simulation states this frame
     /// sits, for renderers to interpolate by (§11.3, M0-14).
@@ -45,6 +54,43 @@ public sealed partial class ArenaHostNode : Node2D
     public float FocusRadius => _host?.RadiusAt(FocusSlot, InterpolationFraction) ?? 0.0f;
 
     public long TickCount => _host?.TickCount ?? 0;
+
+    /// <summary>Wall time of the last tick, ms — for the debug overlay.</summary>
+    public float LastTickMs => _lastTickMs;
+
+    /// <summary>Slowest tick since <see cref="ResetPeakTickMs"/>, ms.</summary>
+    public float PeakTickMs => _peakTickMs;
+
+    /// <summary>Managed bytes allocated inside the last tick. Anything but 0 breaks ARCH §5.</summary>
+    public long LastTickAllocatedBytes => _lastTickAllocatedBytes;
+
+    /// <summary>Managed bytes allocated inside every tick since boot.</summary>
+    public long TickAllocatedBytes => _tickAllocatedBytes;
+
+    /// <summary>Live snakes, of <c>SnakeCount</c> slots.</summary>
+    public int LiveSnakeCount
+    {
+        get
+        {
+            if (_host is null)
+            {
+                return 0;
+            }
+
+            int live = 0;
+            for (int i = 0; i < _host.World.Capacity; i++)
+            {
+                if (_host.World.IsAlive(i))
+                {
+                    live++;
+                }
+            }
+
+            return live;
+        }
+    }
+
+    public void ResetPeakTickMs() => _peakTickMs = 0f;
 
     /// <summary>
     /// ARCH §3 crossing #1: the player's command, written once per tick by
@@ -86,7 +132,19 @@ public sealed partial class ArenaHostNode : Node2D
 
     public override void _PhysicsProcess(double delta)
     {
-        _host?.Tick();
+        if (_host is not null)
+        {
+            long allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
+            long start = Stopwatch.GetTimestamp();
+
+            _host.Tick();
+
+            _lastTickMs = (float)Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+            _peakTickMs = Math.Max(_peakTickMs, _lastTickMs);
+            _lastTickAllocatedBytes = GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
+            _tickAllocatedBytes += _lastTickAllocatedBytes;
+        }
+
         _ticksThisFrame++;
     }
 
