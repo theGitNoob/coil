@@ -534,6 +534,13 @@ CAMERA_ZOOM_MIN         0.55
 CAMERA_ZOOM_MAX         1.0
 CAMERA_ZOOM_SMOOTH_TIME 0.4   s     zoom never snaps
 
+# Controls
+JOYSTICK_ZONE          0.45        fraction of screen width, from the left edge; §3
+JOYSTICK_RADIUS_DP   110.0   dp
+JOYSTICK_DEAD_ZONE     0.15        fraction of radius; below it the heading is held
+JOYSTICK_DRAG_OUT      1.4         radius multiple before the anchor follows the finger
+JOYSTICK_FADE_TIME     0.15  s     fade-out on release; the heading holds
+
 # Sim
 TICK_RATE              60     Hz
 MAX_CATCHUP_TICKS       5
