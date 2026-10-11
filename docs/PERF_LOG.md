@@ -14,6 +14,7 @@ Budget: **6 ms per tick**, 60 Hz, 34 snakes (CLAUDE.md, §11.5).
 | M0-12 | 200 ms stall recovery, catch-up cap | **5 ticks** in the recovery frame, no cascade | SM-A155M, Android 36 |
 | M0-13 | Draw calls for one 12-segment snake | **2** — one body MultiMesh, one head sprite | SM-A155M, Android 36 |
 | M0-14 | Snapshot capture added to `ArenaHost.Tick` — 34 snakes, 20k ticks | `World.Tick` 14.98 µs → `ArenaHost.Tick` **18.52 µs** (+3.37 µs capture), 0 B allocated | SM-A155M, Android 36 |
+| M0-15 | Camera follow, focus head's on-screen motion over 600 frames at 90 Hz | **≤ 0.003 px/frame** (sd 0.0003), zoom 0.9917 at mass 10 | SM-A155M, Android 36 |
 
 ## M0-11 · `World.Tick` baseline
 
@@ -172,4 +173,30 @@ noted under M0-13 and the 66 `Visible` writes per frame to empty slots.
 Neither was isolated here. Scaled naively to 34 snakes it would be several
 milliseconds of the 16.7 ms frame. **M0-19 should measure it directly**; it is
 not part of the tick budget above.
+
+## M0-15 · Camera
+
+No tick-loop change: the camera and the culling-bounds fix both run per frame.
+
+A temporary probe in `game/camera.gd` (removed before commit) recorded the focus
+head's position in screen space, `(head - camera.position) * zoom`, every frame
+for 600 frames after a 2 s settle, with the placeholder snake driving straight
+at base speed:
+
+```
+COIL probe camera: head on screen (-14.65, 0.0) px(design), per-frame screen jitter mean 0.0002 sd 0.0003 max 0.0026, zoom 0.9917, fps 90.0
+```
+
+- The head holds still on screen to **0.003 design px per frame**. That holds at
+  90 Hz only because the camera follows the *interpolated* head (M0-14);
+  following the raw tick state would bring back the 0/1/2-tick judder.
+- The −14.65 px offset is the 40 u look-ahead minus the spring's steady lag at
+  220 u/s, scaled by zoom.
+- Zoom 0.9917 = `(14.34/14)^-0.35`, the §7.4 curve at mass 10.
+
+Found on the way: body MultiMeshes kept the culling bounds of their first draw,
+so once the camera followed the snake away from the origin, the body was culled
+and only the head was drawn. `SnakeRenderer` now sets `CustomAabb` per body each
+frame. Off-screen bodies are therefore genuinely culled now, which M0-19's
+draw-call count should reflect.
 
