@@ -23,6 +23,8 @@ var heading: float = 0.0
 ## False until the first drag past the dead zone; until then the player keeps
 ## its spawn heading. Only this script writes it.
 var has_heading: bool = false
+## Dead-zone radius in canvas units, for finger-follow to share. Read-only.
+var dead_zone_radius: float = 0.0
 
 var _zone: float = 0.0
 var _dead_zone: float = 0.0
@@ -56,6 +58,7 @@ func _ready() -> void:
 		_radius = radius_dp
 	else:
 		_radius = radius_dp * float(dpi) / DP_BASELINE_DPI / stretch
+	dead_zone_radius = _dead_zone * _radius
 	print("COIL joystick\nradius        %.1f canvas u (%d dp at %d dpi, stretch %.3f)\nzone          left %.0f%% of %.0f u" % [
 		_radius, int(radius_dp), dpi, stretch, _zone * 100.0, size.x])
 

@@ -18,7 +18,7 @@ namespace Coil;
 /// </summary>
 public sealed partial class ArenaHostNode : Node2D
 {
-    // The snake the camera follows. M0-17's player agent drives this slot.
+    // The player's slot: the camera follows it and the player agent steers it.
     private const int FocusSlot = 0;
 
     private ArenaHost? _host;
@@ -45,6 +45,21 @@ public sealed partial class ArenaHostNode : Node2D
     public float FocusRadius => _host?.RadiusAt(FocusSlot, InterpolationFraction) ?? 0.0f;
 
     public long TickCount => _host?.TickCount ?? 0;
+
+    /// <summary>
+    /// ARCH §3 crossing #1: the player's command, written once per tick by
+    /// <c>ui/player_agent.gd</c>, which runs its physics step before this
+    /// node's so the command lands in the tick it was meant for.
+    /// </summary>
+    public void SetPlayerCommand(float heading, bool boost, bool cast)
+    {
+        if (_host is null)
+        {
+            return;
+        }
+
+        _host.Commands[FocusSlot] = new InputCommand(heading, boost, cast);
+    }
 
     public override void _Ready()
     {
