@@ -76,6 +76,18 @@ public sealed class World
     /// <summary>Path points pushed since spawn; never saturates at the ring size.</summary>
     public int PathPushesOf(int index) => _paths[index].Pushes;
 
+    /// <summary>
+    /// A snake's raw path ring and the index of its newest point, for readers
+    /// that walk the whole body every frame (M0-24). Age n is at
+    /// <c>newest - n</c>, wrapping at the span's length; only the first
+    /// <see cref="PathCountOf"/> ages are valid.
+    /// </summary>
+    public ReadOnlySpan<Vector2> PathRingOf(int index, out int newest)
+    {
+        newest = _paths[index].Newest;
+        return _paths[index].Slice(_pathPoints);
+    }
+
     /// <summary>A path point by age: 0 is the newest, nearest the head.</summary>
     public Vector2 PathPointOf(int index, int age) => _paths[index].PointAt(_pathPoints, age);
 

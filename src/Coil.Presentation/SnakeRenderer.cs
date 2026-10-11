@@ -168,53 +168,82 @@ public sealed class SnakeRenderer
         // the instance scale is the diameter in world units.
         float diameter = _host.RadiusAt(index, alpha) * 2f;
 
+        // Plain float math over the raw ring from here on: this loop runs for
+        // every segment of every snake each frame, and the runtime on the
+        // handset does not inline PathPointOf or Godot's Vector2 helpers —
+        // with them it cost ~0.6 us per segment (M0-19, M0-24).
+        ReadOnlySpan<Vector2> ring = _world.PathRingOf(index, out int newest);
+        int ringLength = ring.Length;
+        Span<float> buffer = _buffer;
+        float inverseStep = 1f / step;
+
         // Culling bounds, grown as segments are written — see the CustomAabb
         // assignment below.
-        Vector2 min = headPosition;
-        Vector2 max = headPosition;
+        float minX = headPosition.X;
+        float minY = headPosition.Y;
+        float maxX = headPosition.X;
+        float maxY = headPosition.Y;
 
-        int segments = 0;
-        for (int k = 0; k < wanted; k++)
+        WriteInstance(buffer, 0, diameter, headPosition.X, headPosition.Y);
+        int segments = 1;
+
+        for (int k = 1; k < wanted; k++)
         {
-            Vector2 point;
-            if (k == 0)
-            {
-                point = headPosition;
-            }
-            else
-            {
-                // §4.1: segment k is k steps of arc length behind the head. The
-                // head is `lead` past the newest point and the points are a step
-                // apart, so this lands between points `newer` and `newer + 1`.
-                float behind = (k * step) - lead;
-                int newer = (int)(behind / step);
+            // §4.1: segment k is k steps of arc length behind the head. The
+            // head is `lead` past the newest point and the points are a step
+            // apart, so this lands between ages `newer` and `newer + 1`.
+            float ages = ((k * step) - lead) * inverseStep;
+            int newer = (int)ages;
 
-                // The body is as long as the formula asks for or as long as the
-                // path has grown, whichever is shorter.
-                if (newer + 1 >= available)
-                {
-                    break;
-                }
-
-                float t = (behind / step) - newer;
-                point = _world.PathPointOf(index, newer).Lerp(_world.PathPointOf(index, newer + 1), t);
+            // The body is as long as the formula asks for or as long as the
+            // path has grown, whichever is shorter.
+            if (newer + 1 >= available)
+            {
+                break;
             }
 
-            int at = k * FloatsPerInstance;
+            int a = newest - newer;
+            if (a < 0)
+            {
+                a += ringLength;
+            }
 
-            _buffer[at] = diameter;
-            _buffer[at + 1] = 0f;
-            _buffer[at + 2] = 0f;
-            _buffer[at + 3] = point.X;
-            _buffer[at + 4] = 0f;
-            _buffer[at + 5] = diameter;
-            _buffer[at + 6] = 0f;
-            _buffer[at + 7] = point.Y;
+            int b = a - 1;
+            if (b < 0)
+            {
+                b += ringLength;
+            }
+
+            float t = ages - newer;
+            Vector2 near = ring[a];
+            Vector2 far = ring[b];
+            float x = near.X + ((far.X - near.X) * t);
+            float y = near.Y + ((far.Y - near.Y) * t);
+
+            WriteInstance(buffer, k, diameter, x, y);
             segments++;
 
-            min = min.Min(point);
-            max = max.Max(point);
+            if (x < minX)
+            {
+                minX = x;
+            }
+            else if (x > maxX)
+            {
+                maxX = x;
+            }
+
+            if (y < minY)
+            {
+                minY = y;
+            }
+            else if (y > maxY)
+            {
+                maxY = y;
+            }
         }
+
+        Vector2 min = new(minX, minY);
+        Vector2 max = new(maxX, maxY);
 
         // The one crossing into the engine for this snake's whole body.
         _bodyMeshes[index].Buffer = _buffer;
@@ -236,6 +265,20 @@ public sealed class SnakeRenderer
         head.Rotation = _host.HeadingAt(index, alpha);
         head.Scale = Vector2.One * (diameter / DiscTextureSize);
         head.Visible = true;
+    }
+
+    /// <summary>One instance's <c>Transform2D</c>: a uniform scale and an origin.</summary>
+    private static void WriteInstance(Span<float> buffer, int instance, float diameter, float x, float y)
+    {
+        int at = instance * FloatsPerInstance;
+        buffer[at] = diameter;
+        buffer[at + 1] = 0f;
+        buffer[at + 2] = 0f;
+        buffer[at + 3] = x;
+        buffer[at + 4] = 0f;
+        buffer[at + 5] = diameter;
+        buffer[at + 6] = 0f;
+        buffer[at + 7] = y;
     }
 
     /// <summary>
