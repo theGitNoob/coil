@@ -49,6 +49,14 @@ internal static class SpecConfig
         CellSize = 96.0f,
         GraceDuration = 2.0f,
 
+        CameraSmoothTime = 0.12f,
+        CameraLookAhead = 40.0f,
+        CameraZoomBase = 1.0f,
+        CameraZoomExp = -0.35f,
+        CameraZoomMin = 0.55f,
+        CameraZoomMax = 1.0f,
+        CameraZoomSmoothTime = 0.4f,
+
         TickRate = 60,
         MaxCatchupTicks = 5,
         BotSteerInterval = 4,

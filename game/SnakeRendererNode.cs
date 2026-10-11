@@ -19,12 +19,10 @@ namespace Coil;
 ///
 /// <c>arena.tscn</c> also carries a bare <c>Camera2D</c>, which is what makes
 /// world origin — the arena centre — the centre of the view rather than its
-/// top-left corner. It is deliberately unconfigured: the damped follow,
-/// look-ahead and zoom curve in §7.4 are M0-15, in GDScript. Until then the
-/// placeholder snake drives out of frame after about three seconds, because
-/// nothing follows it and nothing steers it yet. This note lives here rather
-/// than in the scene file because Godot discards <c>.tscn</c> comments the
-/// first time the editor saves.
+/// top-left corner. That camera is driven by <c>game/camera.gd</c> (M0-15),
+/// which follows the focus snake with the damped follow, look-ahead and zoom
+/// curve of §7.4. This note lives here rather than in the scene file because
+/// Godot discards <c>.tscn</c> comments the first time the editor saves.
 /// </summary>
 public sealed partial class SnakeRendererNode : Node2D
 {

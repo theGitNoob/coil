@@ -59,6 +59,15 @@ public partial class BalanceData : Resource
     [Export] public float CellSize { get; set; } = 96.0f;
     [Export] public float GraceDuration { get; set; } = 2.0f;
 
+    // --- Camera (§7.4) -----------------------------------------------------
+    [Export] public float CameraSmoothTime { get; set; } = 0.12f;
+    [Export] public float CameraLookAhead { get; set; } = 40.0f;
+    [Export] public float CameraZoomBase { get; set; } = 1.0f;
+    [Export] public float CameraZoomExp { get; set; } = -0.35f;
+    [Export] public float CameraZoomMin { get; set; } = 0.55f;
+    [Export] public float CameraZoomMax { get; set; } = 1.0f;
+    [Export] public float CameraZoomSmoothTime { get; set; } = 0.4f;
+
     // --- Sim (§11) ---------------------------------------------------------
     [Export] public int TickRate { get; set; } = 60;
     [Export] public int MaxCatchupTicks { get; set; } = 5;
@@ -108,6 +117,14 @@ public partial class BalanceData : Resource
         PelletTarget = PelletTarget,
         CellSize = CellSize,
         GraceDuration = GraceDuration,
+
+        CameraSmoothTime = CameraSmoothTime,
+        CameraLookAhead = CameraLookAhead,
+        CameraZoomBase = CameraZoomBase,
+        CameraZoomExp = CameraZoomExp,
+        CameraZoomMin = CameraZoomMin,
+        CameraZoomMax = CameraZoomMax,
+        CameraZoomSmoothTime = CameraZoomSmoothTime,
 
         TickRate = TickRate,
         MaxCatchupTicks = MaxCatchupTicks,

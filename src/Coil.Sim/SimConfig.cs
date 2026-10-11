@@ -124,6 +124,31 @@ public sealed class SimConfig
     /// <summary>Seconds of spawn invulnerability.</summary>
     public required float GraceDuration { get; init; }
 
+    // --- Camera (§7.4) -----------------------------------------------------
+    // The simulation never reads these: the camera is GDScript. They ride in
+    // SimConfig because SimConfigTests pins Appendix A to it one-to-one.
+
+    /// <summary>Smooth time of the critically damped camera follow, s.</summary>
+    public required float CameraSmoothTime { get; init; }
+
+    /// <summary>How far the camera centre leads the head along the heading, u.</summary>
+    public required float CameraLookAhead { get; init; }
+
+    /// <summary>Zoom multiplier at the reference radius; equals the clamp ceiling.</summary>
+    public required float CameraZoomBase { get; init; }
+
+    /// <summary>Exponent of the zoom-vs-radius curve (negative: bigger snake, wider view).</summary>
+    public required float CameraZoomExp { get; init; }
+
+    /// <summary>Lower clamp on zoom (furthest out).</summary>
+    public required float CameraZoomMin { get; init; }
+
+    /// <summary>Upper clamp on zoom (closest in).</summary>
+    public required float CameraZoomMax { get; init; }
+
+    /// <summary>Smooth time of the zoom approach, s — zoom never snaps.</summary>
+    public required float CameraZoomSmoothTime { get; init; }
+
     // --- Sim (§11) ---------------------------------------------------------
 
     /// <summary>Fixed simulation rate, Hz.</summary>
