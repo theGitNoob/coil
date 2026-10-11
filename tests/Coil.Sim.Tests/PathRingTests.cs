@@ -274,6 +274,40 @@ public sealed class PathRingTests
         Assert.Equal(0f, ring.Lead);
     }
 
+    /// <summary>
+    /// The renderer walks the raw ring instead of calling PointAt per segment
+    /// (M0-24). Indexing the slice from Newest backwards, wrapping at its
+    /// length, must give exactly the points PointAt gives — including after
+    /// the ring has wrapped.
+    /// </summary>
+    [Fact]
+    public void PathRing_SliceFromNewest_MatchesPointAt_AfterWrapping()
+    {
+        const int capacity = 8;
+        Vector2[] points = new Vector2[capacity * 3];
+        PathRing ring = new(start: capacity, capacity: capacity);
+        ring.Seed(points, Vector2.Zero);
+
+        for (int i = 1; i <= 21; i++)
+        {
+            ring.Advance(points, new Vector2(PathStep * i, i), PathStep);
+        }
+
+        ReadOnlySpan<Vector2> slice = ring.Slice(points);
+
+        Assert.Equal(capacity, slice.Length);
+        for (int age = 0; age < ring.Count; age++)
+        {
+            int at = ring.Newest - age;
+            if (at < 0)
+            {
+                at += slice.Length;
+            }
+
+            Assert.Equal(ring.PointAt(points, age), slice[at]);
+        }
+    }
+
     private static void AssertSpacingHolds(Vector2[] points, in PathRing ring)
     {
         Assert.True(ring.Count > 2, "the run pushed too few points to prove anything");

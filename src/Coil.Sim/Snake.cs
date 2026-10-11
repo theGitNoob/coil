@@ -67,6 +67,18 @@ public struct PathRing
     /// </summary>
     public readonly int Pushes => _pushes;
 
+    /// <summary>
+    /// Index of the newest point within <see cref="Slice"/>. Older points sit
+    /// at Newest - 1, Newest - 2 and so on, wrapping at the slice length.
+    /// </summary>
+    public readonly int Newest => _newest;
+
+    /// <summary>
+    /// This ring's slice of the shared buffer, for readers that walk many
+    /// points per frame and cannot afford a call per point (M0-24).
+    /// </summary>
+    public readonly ReadOnlySpan<Vector2> Slice(ReadOnlySpan<Vector2> points) => points.Slice(_start, _capacity);
+
     /// <summary>Lays down the first point. Call once, at spawn.</summary>
     public void Seed(Span<Vector2> points, Vector2 head)
     {

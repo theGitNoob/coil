@@ -16,6 +16,7 @@ Budget: **6 ms per tick**, 60 Hz, 34 snakes (CLAUDE.md, §11.5).
 | M0-14 | Snapshot capture added to `ArenaHost.Tick` — 34 snakes, 20k ticks | `World.Tick` 14.98 µs → `ArenaHost.Tick` **18.52 µs** (+3.37 µs capture), 0 B allocated | SM-A155M, Android 36 |
 | M0-15 | Camera follow, focus head's on-screen motion over 600 frames at 90 Hz | **≤ 0.003 px/frame** (sd 0.0003), zoom 0.9917 at mass 10 | SM-A155M, Android 36 |
 | M0-19 | ⚠ Perf spike, 34 snakes, render plan as of M0-15 | **A gameplay-like: 89.9 fps** (0.22% frames > 16.7 ms). **B worst case, 34 × MaxMass on screen: 39.8 fps**, GPU-bound by overdraw | SM-A155M (Helio G99, Mali-G57 MC2), Android 36 |
+| M0-24 | Renderer segment loop over the raw ring, spike scenarios | A: **2.76 → 0.75 ms**/frame; B: **11.42 → 3.32 ms**/frame; positions within 0.0004 u of before | SM-A155M, Android 36 |
 
 ## M0-11 · `World.Tick` baseline
 
@@ -255,4 +256,25 @@ run). The knob and timers were removed before commit.
 
 What to do about B is a render-plan decision, recorded in the M0-19 PR rather
 than settled here.
+
+## M0-24 · Segment loop over the raw ring
+
+First of the two M0-19 fixes. `SnakeRenderer` now reads each snake's path ring
+as a `ReadOnlySpan<Vector2>` (`World.PathRingOf`) and computes segment
+positions and culling bounds with plain float math. Before, it made two
+cross-assembly `PathPointOf` calls and several Godot `Vector2` method calls per
+segment, none of which the handset's runtime inlined.
+
+Measured with the M0-19 spike and a temporary probe (removed before commit),
+15 s per scenario. The probe timed the segment loop alone. Every 10th frame,
+outside the timed region, it recomputed every segment the old way and compared:
+
+| | segment loop, M0-19 | segment loop, M0-24 | compared | max difference |
+|---|---|---|---|---|
+| A — gameplay-like | 2.76 ms | **0.75 ms** | 688,682 segments | 0.00037 u |
+| B — 34 × MaxMass | 11.42 ms | **3.32 ms** (≤ ⅓ required) | 2,162,922 segments | 0.00037 u |
+
+The difference is float rounding: `ages` is now a multiply by `1 / PATH_STEP`
+instead of a divide. B still runs at ~40 fps because it is GPU-bound (22 ms per
+frame), which is M0-23's job. Tick unchanged.
 

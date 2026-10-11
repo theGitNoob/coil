@@ -212,6 +212,38 @@ public sealed class WorldTests
         }
     }
 
+    /// <summary>
+    /// M0-24: the world hands readers the raw ring so the renderer can walk it
+    /// without a call per point. It must agree with PathPointOf for every age.
+    /// </summary>
+    [Fact]
+    public void PathRingOf_FromNewest_MatchesPathPointOf()
+    {
+        World world = NewWorld(out SimConfig config);
+        world.Spawn(2, new Vector2(5f, -3f), heading: 0.4f, config.MassStart);
+        InputCommand[] commands = Commands(world);
+
+        for (int t = 0; t < 300; t++)
+        {
+            commands[2] = new InputCommand(Heading: Mathf.Sin(t * 0.03f), Boost: t % 4 == 0, Cast: false);
+            world.Tick(Dt, commands);
+        }
+
+        ReadOnlySpan<Vector2> ring = world.PathRingOf(2, out int newest);
+
+        Assert.True(world.PathCountOf(2) > 10, "no path to compare");
+        for (int age = 0; age < world.PathCountOf(2); age++)
+        {
+            int at = newest - age;
+            if (at < 0)
+            {
+                at += ring.Length;
+            }
+
+            Assert.Equal(world.PathPointOf(2, age), ring[at]);
+        }
+    }
+
     /// <summary>ARCH §4 and §5: the tick allocates nothing, for any snake count.</summary>
     [Fact]
     public void Tick_ForAFullArena_DoesNotAllocate()
