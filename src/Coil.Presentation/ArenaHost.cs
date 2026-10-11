@@ -80,6 +80,10 @@ public sealed class ArenaHost
     {
         _world.Spawn(0, Vector2.Zero, heading: 0f, _config.MassStart);
 
+        // A snake nobody has steered yet holds its spawn heading rather than
+        // turning toward the neutral command's heading of zero.
+        _commands[0] = new InputCommand(Heading: 0f, Boost: false, Cast: false);
+
         // A frame can be drawn before the first tick; it must not interpolate
         // from an empty slot.
         CaptureSnapshot();
