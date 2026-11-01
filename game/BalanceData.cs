@@ -57,6 +57,7 @@ public partial class BalanceData : Resource
     [Export] public float BorderWarnRadius { get; set; } = 3350.0f;
     [Export] public int SnakeCount { get; set; } = 34;
     [Export] public int PelletTarget { get; set; } = 2600;
+    [Export] public int PelletCapacity { get; set; } = 3000;
     [Export] public float CellSize { get; set; } = 96.0f;
     [Export] public float GraceDuration { get; set; } = 2.0f;
 
@@ -124,6 +125,7 @@ public partial class BalanceData : Resource
         BorderWarnRadius = BorderWarnRadius,
         SnakeCount = SnakeCount,
         PelletTarget = PelletTarget,
+        PelletCapacity = PelletCapacity,
         CellSize = CellSize,
         GraceDuration = GraceDuration,
 
