@@ -48,6 +48,7 @@ internal static class SpecConfig
         SnakeCount = 34,
         PelletTarget = 2600,
         PelletCapacity = 3000,
+        PelletSpawnBudget = 4,
         CellSize = 96.0f,
         GraceDuration = 2.0f,
 

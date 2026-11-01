@@ -58,6 +58,7 @@ public partial class BalanceData : Resource
     [Export] public int SnakeCount { get; set; } = 34;
     [Export] public int PelletTarget { get; set; } = 2600;
     [Export] public int PelletCapacity { get; set; } = 3000;
+    [Export] public int PelletSpawnBudget { get; set; } = 4;
     [Export] public float CellSize { get; set; } = 96.0f;
     [Export] public float GraceDuration { get; set; } = 2.0f;
 
@@ -126,6 +127,7 @@ public partial class BalanceData : Resource
         SnakeCount = SnakeCount,
         PelletTarget = PelletTarget,
         PelletCapacity = PelletCapacity,
+        PelletSpawnBudget = PelletSpawnBudget,
         CellSize = CellSize,
         GraceDuration = GraceDuration,
 

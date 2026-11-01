@@ -189,4 +189,103 @@ public sealed class FoodTests
         Assert.Equal(capacity, food.Count);
         Assert.Equal(-1, food.Spawn(Vector2.Zero, 1f));
     }
+
+    // --- Spawner, M1-03 ------------------------------------------------------
+
+    private const float ArenaRadius = 3500f;    // Appendix A: ARENA_RADIUS
+
+    /// <summary>M1-03: the budget caps one call, so a big shortfall is spread over ticks.</summary>
+    [Fact]
+    public void Food_Replenish_SpawnsAtMostTheBudget()
+    {
+        Food food = new(capacity: 128);
+        Pcg32 rng = new(seed: 1, stream: 0);
+
+        int spawned = food.Replenish(ref rng, target: 100, budget: 8, ArenaRadius, mass: 1f);
+
+        Assert.Equal(8, spawned);
+        Assert.Equal(8, food.Count);
+    }
+
+    [Fact]
+    public void Food_Replenish_StopsAtTheTarget()
+    {
+        Food food = new(capacity: 128);
+        Pcg32 rng = new(seed: 1, stream: 0);
+        food.Replenish(ref rng, target: 95, budget: 95, ArenaRadius, mass: 1f);
+
+        int spawned = food.Replenish(ref rng, target: 100, budget: 8, ArenaRadius, mass: 1f);
+
+        Assert.Equal(5, spawned);
+        Assert.Equal(100, food.Count);
+        Assert.Equal(0, food.Replenish(ref rng, target: 100, budget: 8, ArenaRadius, mass: 1f));
+    }
+
+    /// <summary>A target above the pool size stops at the pool, never throws (ARCH §5).</summary>
+    [Fact]
+    public void Food_Replenish_WhenThePoolFills_StopsShortOfTheTarget()
+    {
+        Food food = new(capacity: 10);
+        Pcg32 rng = new(seed: 1, stream: 0);
+
+        int spawned = food.Replenish(ref rng, target: 20, budget: 50, ArenaRadius, mass: 1f);
+
+        Assert.Equal(10, spawned);
+        Assert.Equal(10, food.Count);
+    }
+
+    [Fact]
+    public void Food_Replenish_PlacesPelletsInsideTheArena_AtTheGivenMass()
+    {
+        Food food = new(capacity: 2000);
+        Pcg32 rng = new(seed: 3, stream: 0);
+
+        food.Replenish(ref rng, target: 2000, budget: 2000, ArenaRadius, mass: 1f);
+
+        for (int i = 0; i < food.Capacity; i++)
+        {
+            Assert.True(food.IsAlive(i));
+            Assert.True(food.PositionOf(i).Length() <= ArenaRadius);
+            Assert.Equal(1f, food.MassOf(i));
+        }
+    }
+
+    /// <summary>
+    /// Uniform over the disk's area, not its radius: a quarter of the pellets
+    /// land inside half the radius. Sampling r uniformly would put half of
+    /// them there and starve the outer arena.
+    /// </summary>
+    [Fact]
+    public void Food_Replenish_SpreadsPelletsUniformlyOverTheDisk()
+    {
+        const int count = 3000;
+        Food food = new(count);
+        Pcg32 rng = new(seed: 5, stream: 0);
+
+        food.Replenish(ref rng, target: count, budget: count, ArenaRadius, mass: 1f);
+
+        int inner = Enumerable.Range(0, count).Count(i => food.PositionOf(i).Length() < ArenaRadius / 2f);
+        int east = Enumerable.Range(0, count).Count(i => food.PositionOf(i).X > 0f);
+
+        Assert.InRange(inner / (float)count, 0.22f, 0.28f);
+        Assert.InRange(east / (float)count, 0.46f, 0.54f);
+    }
+
+    [Fact]
+    public void Food_Replenish_DoesNotAllocate()
+    {
+        Food food = new(capacity: 64);
+        Pcg32 rng = new(seed: 1, stream: 0);
+        food.Replenish(ref rng, target: 64, budget: 64, ArenaRadius, mass: 1f);
+
+        long before = GC.GetAllocatedBytesForCurrentThread();
+
+        for (int i = 0; i < 10_000; i++)
+        {
+            food.Remove(i % 64);
+            food.Replenish(ref rng, target: 64, budget: 4, ArenaRadius, mass: 1f);
+        }
+
+        Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
+    }
 }

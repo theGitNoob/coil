@@ -36,6 +36,7 @@ BorderWarnRadius = 3350.0
 SnakeCount = 34
 PelletTarget = 2600
 PelletCapacity = 3000
+PelletSpawnBudget = 4
 CellSize = 96.0
 GraceDuration = 2.0
 CameraSmoothTime = 0.12

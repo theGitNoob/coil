@@ -131,6 +131,12 @@ public sealed class SimConfig
     /// </summary>
     public required int PelletCapacity { get; init; }
 
+    /// <summary>
+    /// Most pellets the spawner places in one tick while below
+    /// <see cref="PelletTarget"/>, so a shortfall is spread over ticks — M1-03.
+    /// </summary>
+    public required int PelletSpawnBudget { get; init; }
+
     /// <summary>Spatial hash cell edge, u.</summary>
     public required float CellSize { get; init; }
 

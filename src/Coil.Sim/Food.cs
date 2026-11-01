@@ -93,4 +93,35 @@ public sealed class Food
 
         return true;
     }
+
+    /// <summary>
+    /// The spawner, M1-03: tops the live count up toward
+    /// <paramref name="target"/>, at most <paramref name="budget"/> pellets
+    /// per call, uniform over the arena disk. Returns how many it placed.
+    ///
+    /// The budget is what stops a big shortfall from landing on one tick; the
+    /// world passes PELLET_SPAWN_BUDGET inside the tick and the whole target
+    /// at construction.
+    /// </summary>
+    internal int Replenish(ref Pcg32 rng, int target, int budget, float arenaRadius, float mass)
+    {
+        int spawned = 0;
+
+        while (spawned < budget && Count < target)
+        {
+            // r = R·sqrt(u) is uniform over the disk's area; r = R·u would
+            // crowd the centre.
+            float r = arenaRadius * MathF.Sqrt(rng.NextFloat());
+            float theta = Mathf.Tau * rng.NextFloat();
+
+            if (Spawn(new Vector2(r * MathF.Cos(theta), r * MathF.Sin(theta)), mass) < 0)
+            {
+                break;
+            }
+
+            spawned++;
+        }
+
+        return spawned;
+    }
 }

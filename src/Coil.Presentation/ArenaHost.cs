@@ -40,12 +40,13 @@ public sealed class ArenaHost
 
     private long _tickCount;
 
-    public ArenaHost(SimConfig config)
+    /// <summary><paramref name="seed"/> is the match seed, handed to the world unchanged.</summary>
+    public ArenaHost(SimConfig config, ulong seed)
     {
         ArgumentNullException.ThrowIfNull(config);
 
         _config = config;
-        _world = new World(config);
+        _world = new World(config, seed);
         _commands = new InputCommand[config.SnakeCount];
 
         int slots = _world.Capacity;

@@ -18,6 +18,7 @@ Budget: **6 ms per tick**, 60 Hz, 34 snakes (CLAUDE.md, §11.5).
 | M0-19 | ⚠ Perf spike, 34 snakes, render plan as of M0-15 | **A gameplay-like: 89.9 fps** (0.22% frames > 16.7 ms). **B worst case, 34 × MaxMass on screen: 39.8 fps**, GPU-bound by overdraw | SM-A155M (Helio G99, Mali-G57 MC2), Android 36 |
 | M0-24 | Renderer segment loop over the raw ring, spike scenarios | A: **2.76 → 0.75 ms**/frame; B: **11.42 → 3.32 ms**/frame; positions within 0.0004 u of before | SM-A155M, Android 36 |
 | M0-23 | Body discs every max(PATH_STEP, radius/2), M0-19 worst case | **39.8 → 80.7 fps** at 90 Hz; **59.8 fps, 0.56% missed vsync** with the panel at 60 Hz; GPU p99 15.2 ms | SM-A155M, Android 36 |
+| M1-03 | Pellet refill in `World.Tick`, 2,600 pellets, spike scenarios | Steady state A/B **0.088 / 0.085 ms**/tick; refilling 4 pellets every tick **0.091 / 0.080 ms** — no measurable cost | SM-A155M, Android 36 |
 
 ## M0-11 · `World.Tick` baseline
 
@@ -322,4 +323,25 @@ re-measures with real bots, pellets and collision.
 Visual check: a screenshot of the gameplay-like scenario, enlarged 2×, shows a
 faint 1 px ripple on the edge of the largest bodies. At native size they read
 as smooth tubes, consistent with a scallop depth of ~3% of the radius.
+
+## M1-03 · Pellet spawner
+
+`World.Tick` now ends with `Food.Replenish`: below `PELLET_TARGET` it places up
+to `PELLET_SPAWN_BUDGET` (4) pellets, each two PCG32 draws, a square root and a
+sine/cosine. At target it is one comparison. The field is filled to 2,600 at
+world construction, outside the tick.
+
+Spike scenes as of M0-23, 30 s each, panel at 60 Hz. The worst-case run used a
+temporary probe that removed 4 pellets before every tick, outside the timed
+region, so the refill ran on all 1,800 ticks (the count read 2,596 before each
+tick and held at 2,600 after).
+
+| | A — gameplay-like | B — worst case |
+|---|---|---|
+| tick, steady state | avg 0.088 ms, max 1.66 | avg 0.085 ms, max 1.43 |
+| tick, refilling every tick | avg 0.091 ms, max 1.83 | avg 0.080 ms, max 0.54 |
+| tick, M0-23 (no pellets) | 0.083 ms | 0.077 ms |
+
+The spread between runs is larger than the refill's cost. Tick max is
+scheduler noise: it moves by ±1 ms between identical runs.
 
