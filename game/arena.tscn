@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://game/ArenaHostNode.cs" id="1_arena"]
 [ext_resource type="Script" path="res://game/SnakeRendererNode.cs" id="2_snakes"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://ui/joystick.gd" id="4_joystick"]
 [ext_resource type="Script" path="res://ui/player_agent.gd" id="5_player"]
 [ext_resource type="Script" path="res://ui/debug_overlay.gd" id="6_debug"]
+[ext_resource type="Script" path="res://game/PelletRendererNode.cs" id="7_pellets"]
 
 [node name="Arena" type="Node2D"]
 script = ExtResource("1_arena")
@@ -13,6 +14,9 @@ script = ExtResource("1_arena")
 [node name="Camera2D" type="Camera2D" parent="." node_paths=PackedStringArray("host")]
 script = ExtResource("3_camera")
 host = NodePath("..")
+
+[node name="PelletRenderer" type="Node2D" parent="."]
+script = ExtResource("7_pellets")
 
 [node name="SnakeRenderer" type="Node2D" parent="."]
 script = ExtResource("2_snakes")

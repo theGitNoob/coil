@@ -28,6 +28,7 @@ internal static class SpecConfig
         LengthBase = 60.0f,
         LengthPerMass = 1.6f,
         BodyDiscSpacing = 0.5f,
+        PelletDrawRadius = 5.0f,
         MaxMass = 2000.0f,
 
         BoostDrain = 9.0f,

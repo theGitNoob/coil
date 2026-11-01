@@ -19,6 +19,7 @@ Budget: **6 ms per tick**, 60 Hz, 34 snakes (CLAUDE.md, §11.5).
 | M0-24 | Renderer segment loop over the raw ring, spike scenarios | A: **2.76 → 0.75 ms**/frame; B: **11.42 → 3.32 ms**/frame; positions within 0.0004 u of before | SM-A155M, Android 36 |
 | M0-23 | Body discs every max(PATH_STEP, radius/2), M0-19 worst case | **39.8 → 80.7 fps** at 90 Hz; **59.8 fps, 0.56% missed vsync** with the panel at 60 Hz; GPU p99 15.2 ms | SM-A155M, Android 36 |
 | M1-03 | Pellet refill in `World.Tick`, 2,600 pellets, spike scenarios | Steady state A/B **0.088 / 0.085 ms**/tick; refilling 4 pellets every tick **0.091 / 0.080 ms** — no measurable cost | SM-A155M, Android 36 |
+| M1-02 | Pellet renderer, 3,000-slot MultiMesh, 2,600 live | **1 draw call** (3 → 2 with it hidden); full rewrite 0.80 ms loop + 0.22 ms copy; with the change skip **0.082 ms/frame** avg | SM-A155M, Android 36 |
 
 ## M0-11 · `World.Tick` baseline
 
@@ -344,4 +345,36 @@ tick and held at 2,600 after).
 
 The spread between runs is larger than the refill's cost. Tick max is
 scheduler noise: it moves by ±1 ms between identical runs.
+
+## M1-02 · Pellet renderer
+
+All pellets in one `MultiMeshInstance2D`, one instance per pool slot (3,000);
+a dead slot is a zero-scale transform. Measured with temporary probes (removed
+before commit) on the handset, panel at 60 Hz, one placeholder snake.
+
+**Draw calls**: `RENDER_TOTAL_DRAW_CALLS_IN_FRAME` read 3 with the pellet node
+visible (snake body, snake head, pellets) and 2 for the five frames it was
+hidden. **The pellets are one draw call.**
+
+**Redraw cost.** A full rewrite on the handset, split in one run:
+
+| | ms per rewrite |
+|---|---|
+| loop over raw `Food` spans | **0.80** |
+| same loop through `IsAlive` / `MassOf` / `PositionOf` | 1.23 |
+| `MultiMesh.Buffer` copy (96 KB) | 0.22 |
+
+The two loops ran on alternating frames of the same run, so clock and thermal
+state are the same for both. That is about 270 ns per slot. The handset's
+runtime does not inline the accessors (cf. M0-24), so the renderer reads
+`Food.Positions` / `Masses` / `Alive` directly.
+
+Between eats the field is static, so the renderer rewrites only when
+`Food.Version` has moved. Over 1,800 frames, with a probe removing 500 pellets
+at frame 300: **127 frames rewrote** (first draw, the removal, and 125 refill
+ticks at 4 per tick). `Redraw` averaged **0.082 ms/frame**, against ~1.0 ms
+when every frame rewrote. A match with 34 eating snakes changes the field most
+ticks, so expect close to one rewrite per tick there (~1 ms). M1-16 and M2-13
+measure that. If it matters, the next step is to write only the slots that
+changed.
 

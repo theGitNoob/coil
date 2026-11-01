@@ -190,6 +190,55 @@ public sealed class FoodTests
         Assert.Equal(-1, food.Spawn(Vector2.Zero, 1f));
     }
 
+    /// <summary>
+    /// M1-02: the renderer sweeps every slot each frame through these rather
+    /// than the per-index accessors, which the handset's runtime does not
+    /// inline. They must be the live state, not a copy.
+    /// </summary>
+    [Fact]
+    public void Food_Spans_CoverEverySlot_AndReflectSpawnAndRemove()
+    {
+        Food food = new(capacity: 8);
+        int index = food.Spawn(new Vector2(3f, 4f), 6f);
+
+        Assert.Equal(8, food.Positions.Length);
+        Assert.Equal(8, food.Masses.Length);
+        Assert.Equal(8, food.Alive.Length);
+        Assert.True(food.Alive[index]);
+        Assert.Equal(new Vector2(3f, 4f), food.Positions[index]);
+        Assert.Equal(6f, food.Masses[index]);
+
+        food.Remove(index);
+
+        Assert.False(food.Alive[index]);
+    }
+
+    /// <summary>
+    /// M1-02: the renderer skips its 3,000-slot rewrite on frames where this
+    /// has not moved, so every change to what a reader can see must bump it —
+    /// and a no-op must not, or the skip never fires.
+    /// </summary>
+    [Fact]
+    public void Food_Version_ChangesOnSpawnAndRemove_AndNotOnNoOps()
+    {
+        Food food = new(capacity: 1);
+        int initial = food.Version;
+
+        int index = food.Spawn(Vector2.Zero, 1f);
+        int afterSpawn = food.Version;
+        food.Spawn(Vector2.Zero, 1f);           // pool full: nothing placed
+        int afterFullSpawn = food.Version;
+        food.Remove(index);
+        int afterRemove = food.Version;
+        food.Remove(index);                     // already free
+        int afterDoubleRemove = food.Version;
+
+        Assert.NotEqual(initial, afterSpawn);
+        Assert.Equal(afterSpawn, afterFullSpawn);
+        Assert.NotEqual(afterSpawn, afterRemove);
+        Assert.Equal(afterRemove, afterDoubleRemove);
+    }
+
     // --- Spawner, M1-03 ------------------------------------------------------
 
     private const float ArenaRadius = 3500f;    // Appendix A: ARENA_RADIUS

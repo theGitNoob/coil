@@ -36,6 +36,7 @@ public partial class BalanceData : Resource
     [Export] public float LengthBase { get; set; } = 60.0f;
     [Export] public float LengthPerMass { get; set; } = 1.6f;
     [Export] public float BodyDiscSpacing { get; set; } = 0.5f;
+    [Export] public float PelletDrawRadius { get; set; } = 5.0f;
     [Export] public float MaxMass { get; set; } = 2000.0f;
 
     // --- Economy (§4.3) ----------------------------------------------------
@@ -107,6 +108,7 @@ public partial class BalanceData : Resource
         LengthBase = LengthBase,
         LengthPerMass = LengthPerMass,
         BodyDiscSpacing = BodyDiscSpacing,
+        PelletDrawRadius = PelletDrawRadius,
         MaxMass = MaxMass,
 
         BoostDrain = BoostDrain,

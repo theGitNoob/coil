@@ -400,7 +400,7 @@ Nothing in v1 should be written in a way that breaks this. When in doubt: does t
 ### 11.5 Rendering
 
 - **Snake bodies:** one `MultiMeshInstance2D` per snake, one instance per body disc (§4.1 `disc_spacing`), transforms written in bulk from the path buffer each frame. 40 snakes ≈ 40 draw calls.
-- **Pellets:** a single `MultiMeshInstance2D` for all ~2,600 pellets. One draw call.
+- **Pellets:** a single `MultiMeshInstance2D` for all ~2,600 pellets. One draw call. A pellet is drawn at `PELLET_DRAW_RADIUS * sqrt(mass / PELLET_MASS)`, so its area grows with the mass it carries: a 6-mass corpse chunk reads as about 2.4× a normal pellet. The size is visual only. Eating goes by the magnet radius (§4.3), not by pellet size.
 - **Heads:** separate sprites (they need eyes, class tint, name label).
 - No `Sprite2D` per segment. Ever.
 - One texture atlas, `filter: linear`, mipmaps off, MSAA off, no post-processing except an optional cheap vignette.
@@ -505,6 +505,7 @@ RADIUS_MASS_DIVISOR   100.0   -> radius = clamp(14*(1 + mass/100)^0.25, 14, 46)
 LENGTH_BASE            60.0
 LENGTH_PER_MASS         1.6
 BODY_DISC_SPACING       0.5         -> body discs drawn every max(PATH_STEP, radius * 0.5) u; §4.1
+PELLET_DRAW_RADIUS      5.0   u     a PELLET_MASS pellet; drawn at 5 * sqrt(mass / PELLET_MASS); §11.5
 MAX_MASS             2000.0   sizes the path ring; §4.1
 
 # Economy
