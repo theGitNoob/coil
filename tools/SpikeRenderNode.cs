@@ -29,6 +29,7 @@ public sealed partial class SpikeRenderNode : Node2D
     private const float WarmupSeconds = 5f;
     private const float MeasureSeconds = 30f;
     private const int MaxFrames = 8192;
+    private const ulong Seed = 1;      // fixed, so every spike run measures the same pellet field
 
     private readonly float[] _frameMs = new float[MaxFrames];
     private readonly float[] _redrawMs = new float[MaxFrames];
@@ -75,7 +76,7 @@ public sealed partial class SpikeRenderNode : Node2D
         _snakesRoot = new Node2D { Name = $"Snakes{scenario}" };
         AddChild(_snakesRoot);
 
-        _host = new ArenaHost(_config);
+        _host = new ArenaHost(_config, Seed);
         int count = _config.SnakeCount;
         _turnRates = new float[count];
         _phases = new float[count];

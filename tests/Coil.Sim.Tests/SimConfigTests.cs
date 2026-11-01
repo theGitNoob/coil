@@ -66,6 +66,7 @@ public sealed class SimConfigTests
         ("SnakeCount", 34),
         ("PelletTarget", 2600),
         ("PelletCapacity", 3000),
+        ("PelletSpawnBudget", 4),
         ("CellSize", 96.0),
         ("GraceDuration", 2.0),
 

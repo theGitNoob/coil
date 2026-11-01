@@ -16,11 +16,12 @@ public sealed class WorldTests
 {
     private const float Dt = 1f / 60f;      // Appendix A: TICK_RATE = 60
     private const float Tolerance = 1e-3f;
+    private const ulong Seed = 12345;
 
     private static World NewWorld(out SimConfig config)
     {
         config = SpecConfig.Create();
-        return new World(config);
+        return new World(config, Seed);
     }
 
     private static InputCommand[] Commands(World world) => new InputCommand[world.Capacity];
@@ -37,14 +38,91 @@ public sealed class WorldTests
         }
     }
 
-    /// <summary>ARCH §4: pellets are allocated once at construction, at the configured pool size.</summary>
+    /// <summary>
+    /// ARCH §4: pellets are allocated once at construction, at the configured
+    /// pool size. M1-03: the field starts full, so the first tick never pays
+    /// for 2,600 spawns.
+    /// </summary>
     [Fact]
-    public void World_Construction_AllocatesFoodAtPelletCapacity()
+    public void World_Construction_AllocatesFoodAndFillsItToPelletTarget()
     {
         World world = NewWorld(out SimConfig config);
 
         Assert.Equal(config.PelletCapacity, world.Food.Capacity);
-        Assert.Equal(0, world.Food.Count);
+        Assert.Equal(config.PelletTarget, world.Food.Count);
+    }
+
+    /// <summary>ARCH §4: pellet placement comes from the seeded PRNG in world state, nothing else.</summary>
+    [Fact]
+    public void World_ForTheSameSeed_PlacesIdenticalPellets_AndForAnotherSeed_DifferentOnes()
+    {
+        World left = NewWorld(out SimConfig config);
+        World right = new(config, Seed);
+        World other = new(config, Seed + 1);
+
+        int differing = 0;
+        for (int i = 0; i < config.PelletTarget; i++)
+        {
+            Assert.Equal(left.Food.PositionOf(i), right.Food.PositionOf(i));
+            if (left.Food.PositionOf(i) != other.Food.PositionOf(i))
+            {
+                differing++;
+            }
+        }
+
+        Assert.Equal(config.PelletTarget, differing);
+    }
+
+    /// <summary>
+    /// M1-03: a shortfall is made up PELLET_SPAWN_BUDGET pellets per tick, so
+    /// clearing a whole region (a mass die-off, a feeding frenzy) costs no
+    /// single tick more than the budget.
+    /// </summary>
+    [Fact]
+    public void Tick_AfterPelletsAreEaten_RefillsAtMostTheSpawnBudgetPerTick()
+    {
+        World world = NewWorld(out SimConfig config);
+        const int eaten = 50;
+        for (int i = 0; i < eaten; i++)
+        {
+            world.Food.Remove(i);
+        }
+
+        int ticks = 0;
+        while (world.Food.Count < config.PelletTarget)
+        {
+            int before = world.Food.Count;
+            world.Tick(Dt, Commands(world));
+            ticks++;
+
+            Assert.InRange(world.Food.Count - before, 1, config.PelletSpawnBudget);
+        }
+
+        Assert.Equal((int)MathF.Ceiling(eaten / (float)config.PelletSpawnBudget), ticks);
+
+        world.Tick(Dt, Commands(world));
+        Assert.Equal(config.PelletTarget, world.Food.Count);
+    }
+
+    [Fact]
+    public void Tick_WhileRefillingPellets_AllocatesNothing()
+    {
+        World world = NewWorld(out SimConfig config);
+        world.Spawn(0, Vector2.Zero, heading: 0f, config.MassStart);
+        InputCommand[] commands = Commands(world);
+        world.Tick(Dt, commands);
+
+        long before = GC.GetAllocatedBytesForCurrentThread();
+
+        for (int t = 0; t < 120; t++)
+        {
+            world.Food.Remove(t);
+            world.Food.Remove(t + 1000);
+            world.Tick(Dt, commands);
+        }
+
+        Assert.Equal(before, GC.GetAllocatedBytesForCurrentThread());
+        Assert.Equal(config.PelletTarget, world.Food.Count);
     }
 
     /// <summary>§4.2 step 3: head += RIGHT.rotated(heading) * speed * dt.</summary>
@@ -290,7 +368,7 @@ public sealed class WorldTests
     public void Tick_ForTheSameCommandStream_IsDeterministic()
     {
         World left = NewWorld(out SimConfig config);
-        World right = new(config);
+        World right = new(config, Seed);
 
         for (int i = 0; i < 8; i++)
         {

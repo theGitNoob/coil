@@ -30,7 +30,14 @@ public sealed class World
 
     private readonly Food _food;
 
-    public World(SimConfig config)
+    // ARCH §4: the only source of randomness; a field, so it is world state.
+    private Pcg32 _rng;
+
+    /// <summary>
+    /// <paramref name="seed"/> fixes every random draw the world makes, so the
+    /// same seed and command stream replay identically (ARCH §4).
+    /// </summary>
+    public World(SimConfig config, ulong seed)
     {
         ArgumentNullException.ThrowIfNull(config);
 
@@ -50,11 +57,15 @@ public sealed class World
         _masses = new float[_capacity];
         _alive = new bool[_capacity];
         _food = new Food(config.PelletCapacity);
+        _rng = new Pcg32(seed, stream: 0);
 
         for (int i = 0; i < _capacity; i++)
         {
             _paths[i] = new PathRing(start: i * _pathCapacity, capacity: _pathCapacity);
         }
+
+        // M1-03: the field starts full, outside the tick; Tick only tops it up.
+        _food.Replenish(ref _rng, config.PelletTarget, config.PelletTarget, config.ArenaRadius, config.PelletMass);
     }
 
     /// <summary>Snake slots in this world, live or not.</summary>
@@ -145,6 +156,9 @@ public sealed class World
             // §4.2 step 4.
             _paths[i].Advance(_pathPoints, _heads[i], _config.PathStep);
         }
+
+        // M1-03: the shortfall is made up a budget at a time, never in one tick.
+        _food.Replenish(ref _rng, _config.PelletTarget, _config.PelletSpawnBudget, _config.ArenaRadius, _config.PelletMass);
     }
 
     private float Radius(float mass) => Math.Clamp(

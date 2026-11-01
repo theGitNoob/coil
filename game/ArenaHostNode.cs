@@ -110,7 +110,10 @@ public sealed partial class ArenaHostNode : Node2D
     public override void _Ready()
     {
         SimConfig config = BalanceLoader.Load();
-        _host = new ArenaHost(config);
+
+        // A fresh match each launch; printed below so a run can be replayed.
+        ulong seed = ((ulong)GD.Randi() << 32) | GD.Randi();
+        _host = new ArenaHost(config, seed);
         _host.SpawnPlaceholderSnake();
 
         // The host owns the world and the snapshot the renderer interpolates
@@ -127,7 +130,9 @@ public sealed partial class ArenaHostNode : Node2D
             + $"tick rate     {Engine.PhysicsTicksPerSecond} Hz (config {config.TickRate})\n"
             + $"catch-up cap  {ProjectSettings.GetSetting("physics/common/max_physics_steps_per_frame")} "
             + $"(config {config.MaxCatchupTicks})\n"
-            + $"snakes        {config.SnakeCount} slots, 1 spawned");
+            + $"snakes        {config.SnakeCount} slots, 1 spawned\n"
+            + $"pellets       {_host.World.Food.Count} of {config.PelletTarget} target, pool {_host.World.Food.Capacity}\n"
+            + $"seed          {seed}");
     }
 
     public override void _PhysicsProcess(double delta)
