@@ -119,6 +119,7 @@ public sealed partial class ArenaHostNode : Node2D
         // The host owns the world and the snapshot the renderer interpolates
         // from, so it is the only thing that can hand them over. The renderer
         // drives its own frame from there.
+        GetNode<PelletRendererNode>("PelletRenderer").Bind(_host, config);
         _snakes = GetNode<SnakeRendererNode>("SnakeRenderer");
         _snakes.Bind(this, _host, config);
 

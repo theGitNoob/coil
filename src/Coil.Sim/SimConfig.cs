@@ -67,6 +67,13 @@ public sealed class SimConfig
     public required float BodyDiscSpacing { get; init; }
 
     /// <summary>
+    /// Drawn radius of a <see cref="PelletMass"/> pellet, u; heavier pellets
+    /// scale by sqrt(mass / PelletMass). Rendering only — eating goes by the
+    /// magnet radius (§4.3, §11.5).
+    /// </summary>
+    public required float PelletDrawRadius { get; init; }
+
+    /// <summary>
     /// The mass the path ring is sized for (§4.1: "sized to max_mass and never
     /// reallocated mid-match"). A snake past this keeps growing longer but its
     /// body is truncated at the ring capacity rather than reallocating.

@@ -44,6 +44,7 @@ public sealed class SimConfigTests
         ("LengthBase", 60.0),
         ("LengthPerMass", 1.6),
         ("BodyDiscSpacing", 0.5),
+        ("PelletDrawRadius", 5.0),
         ("MaxMass", 2000.0),
 
         // Economy

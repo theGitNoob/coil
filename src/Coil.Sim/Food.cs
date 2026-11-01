@@ -27,6 +27,8 @@ public sealed class Food
     private readonly int[] _free;
     private int _freeCount;
 
+    private int _version;
+
     internal Food(int capacity)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(capacity);
@@ -55,6 +57,22 @@ public sealed class Food
 
     public float MassOf(int index) => _masses[index];
 
+    // Every slot, for readers that sweep the whole pool each frame (M1-02):
+    // the handset's runtime does not inline the per-index accessors above. A
+    // slot's position and mass mean something only where Alive is true.
+    public ReadOnlySpan<Vector2> Positions => _positions;
+
+    public ReadOnlySpan<float> Masses => _masses;
+
+    public ReadOnlySpan<bool> Alive => _alive;
+
+    /// <summary>
+    /// Moves whenever a reader could see a difference: a spawn, a remove, and
+    /// (from M1-09) a pellet moving. Equal values mean nothing changed, which
+    /// lets the renderer skip its full rewrite on unchanged frames (M1-02).
+    /// </summary>
+    public int Version => _version;
+
     /// <summary>
     /// Places a pellet in a free slot and returns its index, or -1 when the
     /// pool is full. A full pool drops the pellet rather than throwing: a mass
@@ -72,6 +90,7 @@ public sealed class Food
         _positions[index] = position;
         _masses[index] = mass;
         _alive[index] = true;
+        _version = unchecked(_version + 1);
 
         return index;
     }
@@ -90,6 +109,7 @@ public sealed class Food
 
         _alive[index] = false;
         _free[_freeCount++] = index;
+        _version = unchecked(_version + 1);
 
         return true;
     }

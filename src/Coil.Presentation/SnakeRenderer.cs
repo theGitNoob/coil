@@ -23,8 +23,7 @@ namespace Coil.Presentation;
 /// every step or so, and a body pinned to them would advance in uneven jumps
 /// however smoothly the head moved.
 ///
-/// The art is a placeholder. <c>assets/</c> is empty and the snake atlas is
-/// A-02, so this generates a flat disc at construction and tints it. Nothing
+/// The art is a placeholder: <see cref="PlaceholderDisc"/>, tinted. Nothing
 /// here survives A-02, and nothing here decides a palette — that is A-01.
 /// </summary>
 public sealed class SnakeRenderer
@@ -34,13 +33,6 @@ public sealed class SnakeRenderer
     /// matrix padded to four floats: <c>[x.x, y.x, 0, o.x, x.y, y.y, 0, o.y]</c>.
     /// </summary>
     private const int FloatsPerInstance = 8;
-
-    /// <summary>
-    /// Edge of the generated placeholder disc, in pixels. An implementation
-    /// detail of the placeholder, not a tunable — A-02 deletes it along with
-    /// the rest of the stand-in art.
-    /// </summary>
-    private const int DiscTextureSize = 64;
 
     private static readonly Color BodyTint = new(0.36f, 0.78f, 0.62f);
     private static readonly Color HeadTint = new(0.85f, 0.94f, 0.70f);
@@ -80,7 +72,7 @@ public sealed class SnakeRenderer
         _maxSegments = SegmentCount(_config.MaxMass, _config.PathStep);
         _buffer = new float[_maxSegments * FloatsPerInstance];
 
-        ImageTexture disc = CreateDiscTexture();
+        ImageTexture disc = PlaceholderDisc.Create();
         var quad = new QuadMesh { Size = Vector2.One };
 
         int slots = _world.Capacity;
@@ -268,7 +260,7 @@ public sealed class SnakeRenderer
         Sprite2D head = _headNodes[index];
         head.Position = headPosition;
         head.Rotation = _host.HeadingAt(index, alpha);
-        head.Scale = Vector2.One * (diameter / DiscTextureSize);
+        head.Scale = Vector2.One * (diameter / PlaceholderDisc.TextureSize);
         head.Visible = true;
     }
 
@@ -293,33 +285,4 @@ public sealed class SnakeRenderer
     /// </summary>
     private int SegmentCount(float mass, float spacing) =>
         (int)((_config.LengthBase + (mass * _config.LengthPerMass)) / spacing);
-
-    /// <summary>
-    /// A white disc, generated rather than loaded: the atlas is A-02 and
-    /// <c>assets/</c> is deliberately still empty, so this keeps the
-    /// placeholder out of the APK and out of A-01/A-02's way.
-    /// </summary>
-    private static ImageTexture CreateDiscTexture()
-    {
-        Image image = Image.CreateEmpty(DiscTextureSize, DiscTextureSize, false, Image.Format.Rgba8);
-
-        float centre = DiscTextureSize * 0.5f;
-        float radius = centre - 1f;
-
-        for (int y = 0; y < DiscTextureSize; y++)
-        {
-            for (int x = 0; x < DiscTextureSize; x++)
-            {
-                float distance = new Vector2(x + 0.5f - centre, y + 0.5f - centre).Length();
-
-                // One pixel of linear falloff, so the placeholder's edge is not
-                // a staircase at the zoom the camera will use.
-                float alpha = Math.Clamp(radius - distance, 0f, 1f);
-
-                image.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
-            }
-        }
-
-        return ImageTexture.CreateFromImage(image);
-    }
 }
